@@ -1,8 +1,13 @@
 # Papiro
 
-[![verificar](https://github.com/kauan-salgado/papiro/actions/workflows/verificar.yml/badge.svg)](https://github.com/kauan-salgado/papiro/actions/workflows/verificar.yml)
+[![ver rodando](https://img.shields.io/badge/ver_rodando-papiro--concursos.vercel.app-000?style=for-the-badge&logo=vercel&logoColor=white)](https://papiro-concursos.vercel.app)
 
-**[Ver rodando →](https://papiro-concursos.vercel.app)** · [API](https://papiro-api.vercel.app/api/health)
+[![verificar](https://github.com/kauan-salgado/papiro/actions/workflows/verificar.yml/badge.svg)](https://github.com/kauan-salgado/papiro/actions/workflows/verificar.yml)
+[![API](https://img.shields.io/badge/API-/api/health-0a7?style=flat)](https://papiro-api.vercel.app/api/health)
+
+> **[papiro-concursos.vercel.app](https://papiro-concursos.vercel.app)** — demonstracao publica com dois
+> editais de exemplo. Registre e exclua sessoes a vontade; apagar editais esta
+> desativado para a vitrine nao ser zerada.
 
 **Gerenciador de edital verticalizado e metricas de estudo** para quem estuda
 para varios concursos de TI ao mesmo tempo.
