@@ -1,0 +1,15 @@
+{
+  "name": "papiro",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Gerenciador de edital verticalizado e metricas de estudo",
+  "scripts": {
+    "test": "npm test --prefix api && npm test --prefix web",
+    "test:coverage": "npm run test:coverage --prefix api && npm run test:coverage --prefix web",
+    "typecheck": "npm run typecheck --prefix api && npm run typecheck --prefix web",
+    "dev:web": "npm run dev --prefix web",
+    "seed": "npm run seed --prefix api",
+    "seed:demo": "npm run seed --prefix api -- --demo",
+    "verificar": "npm run typecheck && npm test"
+  }
+}

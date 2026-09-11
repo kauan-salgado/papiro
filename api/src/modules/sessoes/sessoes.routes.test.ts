@@ -49,7 +49,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await prisma.concurso.deleteMany({ where: { nome: NOME_DO_CONCURSO } });
+  await prisma.concurso.deleteMany({ where: { nome: { startsWith: NOME_DO_CONCURSO } } });
   await prisma.$disconnect();
 });
 
@@ -107,12 +107,20 @@ describe('POST /api/sessoes', () => {
   });
 
   test('recusa vinculo a simulado de outro cargo', async () => {
-    const outroCargo = await prisma.cargo.findFirstOrThrow({
-      where: { NOT: { id: cargoId } },
-      select: { id: true },
-    });
+    // O outro cargo e criado aqui, e nao procurado no banco: teste que depende
+    // do seed passa na maquina de quem semeou e falha no CI com banco limpo.
+    const outroConcurso = await request(app)
+      .post('/api/concursos')
+      .send({ nome: `${NOME_DO_CONCURSO} — vizinho` })
+      .expect(201);
+
+    const outroCargo = await request(app)
+      .post('/api/cargos')
+      .send({ concursoId: outroConcurso.body.data.id, nome: 'Cargo vizinho' })
+      .expect(201);
+
     const simuladoAlheio = await prisma.simulado.create({
-      data: { cargoId: outroCargo.id, nome: '__teste__ simulado alheio' },
+      data: { cargoId: outroCargo.body.data.id, nome: '__teste__ simulado alheio' },
     });
 
     const resposta = await request(app)
@@ -122,7 +130,7 @@ describe('POST /api/sessoes', () => {
 
     expect(resposta.body.error).toContain('outro cargo');
 
-    await prisma.simulado.delete({ where: { id: simuladoAlheio.id } });
+    await request(app).delete(`/api/concursos/${outroConcurso.body.data.id}`).expect(204);
   });
 });
 

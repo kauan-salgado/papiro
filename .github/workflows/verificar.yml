@@ -1,0 +1,78 @@
+name: verificar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verificar:
+    name: typecheck e testes
+    runs-on: ubuntu-latest
+
+    # Os testes de integracao falam com um Postgres de verdade: metade das
+    # regras do projeto vive em CHECK constraint e em view, e mock nao reproduz.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: papiro
+          POSTGRES_PASSWORD: papiro
+          POSTGRES_DB: papiro
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U papiro -d papiro"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      DATABASE_URL: postgresql://papiro:papiro@localhost:5432/papiro?schema=public
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            api/package-lock.json
+            web/package-lock.json
+
+      - name: Instalar dependencias da API
+        working-directory: api
+        run: npm ci
+
+      - name: Gerar o Prisma Client
+        working-directory: api
+        run: npx prisma generate
+
+      - name: Aplicar as migrations
+        working-directory: api
+        run: npx prisma migrate deploy
+
+      - name: Typecheck da API
+        working-directory: api
+        run: npm run typecheck
+
+      - name: Testes da API
+        working-directory: api
+        run: npm run test:coverage
+
+      - name: Instalar dependencias do frontend
+        working-directory: web
+        run: npm ci
+
+      - name: Typecheck do frontend
+        working-directory: web
+        run: npm run typecheck
+
+      - name: Testes do frontend
+        working-directory: web
+        run: npm run test:coverage
+
+      - name: Build de producao do frontend
+        working-directory: web
+        run: npm run build

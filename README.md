@@ -13,6 +13,18 @@ Papiro modela isso como banco relacional de verdade: `Concurso -> Cargo ->
 Disciplina -> Topico -> Sessao de Estudo`, com as regras de negocio impostas
 pelo Postgres, nao apenas pelo formulario.
 
+![Edital verticalizado com o formulário de sessão aberto no lugar](docs/edital-verticalizado.jpeg)
+
+![Dashboard de desempenho: visão macro por disciplina e micro por tópico](docs/dashboard-desempenho.jpeg)
+
+| | |
+| --- | --- |
+| **Ideia central** | Todo agregado e `SUM` sobre uma fact table. Nenhum contador mutavel. |
+| **Regras de negocio** | `CHECK constraint` no Postgres, Zod na API, Zod no formulario — nessa ordem de autoridade |
+| **Testes** | 130 no total: 44 na API (contra Postgres real) e 86 no front |
+| **Cobertura** | API 88,9% de linhas · front 89,7% — limites fixados no `vitest.config.ts` |
+| **Acessibilidade** | 0 falha de contraste WCAG AA nas duas telas, medida sobre os elementos renderizados |
+
 ---
 
 ## Stack
@@ -53,6 +65,12 @@ cd ../web && npm install && npm run dev
 | API (health) | http://localhost:3333/api/health |
 | Adminer | http://localhost:8081 |
 | Postgres (host) | `localhost:5433` |
+
+Da raiz do repositorio, para conferir tudo de uma vez:
+
+```bash
+npm run verificar     # typecheck + 130 testes, API e frontend
+```
 
 O Postgres e publicado na **5433** de proposito, para nao colidir com uma
 instalacao local na 5432. Dentro da rede do Compose a porta continua sendo 5432.
@@ -98,6 +116,7 @@ Papiro/
 ├── db/
 │   ├── schema.sql        # tabelas, enum, CHECKs e indices (leitura humana)
 │   └── views.sql         # as duas views de dashboard
+├── docs/                 # prints das telas
 ├── docs/
 └── docker-compose.yml
 ```
@@ -351,6 +370,35 @@ Tres defeitos reais apareceram nessa verificacao e foram corrigidos:
    40 px para a barra. O eixo passou a ser responsivo (no ranking, so o codigo
    do edital — o texto completo ja esta na lista logo abaixo).
 
+### Testes do frontend
+
+```bash
+cd web && npm test           # 86 testes
+npm run test:coverage        # 89,7% de linhas, 86,2% de funcoes, 80,7% de ramos
+```
+
+Vitest com Testing Library, consultando a interface **pelo que o usuario ve**
+(papel, rotulo, texto) em vez de por classe CSS — teste que conhece o `className`
+quebra quando o estilo muda e passa quando o comportamento quebra.
+
+O que esta coberto, e por que cada um importa:
+
+| Arquivo | O que ele protege |
+| --- | --- |
+| `sessao.schema.test.ts` | A regra condicional das questoes nos dois sentidos, e a garantia de que tempo e contadores sao reportados na mesma passada |
+| `FormularioSessao.test.tsx` | O bloco de questoes aparecer e sumir, os contadores serem limpos ao trocar de tipo, e o `fieldErrors` do backend cair no campo certo |
+| `HistoricoSessoes.test.tsx` | Formatacao do historico e exclusao individual pelo id certo |
+| `TopicoLinha.test.tsx` | O painel abrir no lugar, o `aria-expanded`/`aria-controls` casarem e o teclado funcionar |
+| `PaginaEdital.test.tsx` | Agrupamento por disciplina, resumo do edital e o topico aberto vivendo na URL |
+| `PaginaDesempenho.test.tsx` | Ordem do ranking, estados vazios e os links de ida e volta entre dashboard e edital |
+| `api.test.ts` | O envelope virando dado ou `ApiError`, preservando os erros por campo |
+| `formatar.test.ts` | Minutos viram horas so aqui — se quebrar, alguem formatou em outro lugar |
+
+Um teste em particular existe para defender uma decisao de arquitetura: ao
+trocar o tipo de estudo de "Questoes" para "Revisao", os contadores precisam ser
+zerados antes do envio. Se sobrevivessem, o `CHECK constraint` do banco recusaria
+a sessao — e o usuario veria um erro que nao causou.
+
 
 ---
 
@@ -425,4 +473,37 @@ um objeto qualquer.
 - [x] **2. Schema e migrations** — `schema.prisma`, CHECKs, views SQL e seed em lote
 - [x] **3. API** — CRUD do edital, importacao em lote, sessoes e dashboards
 - [x] **4. Frontend** — edital verticalizado, formulario inline, dashboards
-- [ ] **5. README de portfolio** — arquitetura, decisoes, GIF do dashboard
+- [x] **5. README de portfolio** — arquitetura, decisoes, testes e prints
+
+---
+
+## Limitacoes conhecidas
+
+Um projeto de portfolio honesto declara o que **nao** fez:
+
+- **Os editais sao dados de exemplo.** Os itens em `api/prisma/data/` sao
+  aproximacoes escritas para exercitar o modelo, nao a transcricao literal dos
+  editais publicados. O formato de importacao ja e o definitivo — trocar o array
+  `itens` (ou chamar `POST /api/cargos/:id/edital/importar`) basta.
+- **Sem autenticacao.** O projeto assume um unico usuario na propria maquina.
+  Colocar isso em rede exigiria `usuario_id` na hierarquia, sessao e
+  autorizacao por linha — mudanca de modelo, nao de tela.
+- **Sem paginacao.** Um edital tem dezenas de itens e um historico tem dezenas
+  de sessoes; `LIMIT` viraria necessario na casa dos milhares.
+- **`npm audit` acusa vulnerabilidades na CLI do Prisma** (`mysql2`,
+  `deepmerge-ts`), dependencias de desenvolvimento que nao entram no runtime —
+  a API fala Postgres pelo `@prisma/adapter-pg`. Corrigir com `audit fix --force`
+  faria downgrade da CLI.
+- **CI sem execucao comprovada.** O workflow existe
+  (`.github/workflows/verificar.yml`: sobe um Postgres 16, aplica as migrations,
+  roda typecheck, os 130 testes com cobertura e o build) e os mesmos comandos
+  passam localmente — mas o repositorio ainda nao foi enviado ao GitHub, entao
+  ninguem o viu rodar la.
+
+### Proximos passos naturais
+
+1. Revisao espacada: a fact table ja guarda `data` e `tipo_estudo` por topico —
+  e o suficiente para calcular quando cada assunto precisa voltar.
+2. Meta de horas por disciplina, comparando o planejado com o `SUM` real.
+3. Exportar o edital verticalizado anotado em PDF.
+

@@ -1,0 +1,76 @@
+import { screen } from '@testing-library/react';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { api } from '../lib/api.js';
+import { renderComProvedores } from '../test/utils.js';
+import type { Cargo } from '../types/api.js';
+import { PaginaInicial } from './PaginaInicial.js';
+
+vi.mock('../lib/api.js', async (importarOriginal) => {
+  const original = await importarOriginal<typeof import('../lib/api.js')>();
+  return { ...original, api: { get: vi.fn(), post: vi.fn(), remover: vi.fn() } };
+});
+
+const CARGOS: Cargo[] = [
+  {
+    id: 7,
+    concursoId: 1,
+    nome: 'Área 3 — Computação',
+    concurso: { id: 1, nome: 'Polícia Federal', banca: 'CEBRASPE' },
+    _count: { disciplinas: 8, simulados: 1 },
+  },
+  {
+    id: 8,
+    concursoId: 2,
+    nome: 'Perfil 5 — Segurança',
+    concurso: { id: 2, nome: 'DATAPREV', banca: null },
+    _count: { disciplinas: 6, simulados: 0 },
+  },
+];
+
+beforeEach(() => {
+  vi.mocked(api.get).mockResolvedValue(CARGOS);
+});
+
+describe('PaginaInicial', () => {
+  test('lista um cartao por edital em disputa', async () => {
+    renderComProvedores(<PaginaInicial />);
+
+    expect(await screen.findByText('Polícia Federal')).toBeInTheDocument();
+    expect(screen.getByText('DATAPREV')).toBeInTheDocument();
+    expect(screen.getByText('8 disciplinas')).toBeInTheDocument();
+  });
+
+  test('cada cartao leva ao edital e ao desempenho daquele cargo', async () => {
+    renderComProvedores(<PaginaInicial />);
+
+    const links = await screen.findAllByRole('link', { name: 'Abrir edital' });
+
+    expect(links[0]).toHaveAttribute('href', '/cargos/7/edital');
+    expect(screen.getAllByRole('link', { name: 'Ver desempenho' })[1]).toHaveAttribute(
+      'href',
+      '/cargos/8/dashboard',
+    );
+  });
+
+  test('concurso sem banca informada nao mostra campo vazio', async () => {
+    renderComProvedores(<PaginaInicial />);
+
+    expect(await screen.findByText('banca não informada')).toBeInTheDocument();
+  });
+
+  test('banco sem editais orienta a rodar o seed', async () => {
+    vi.mocked(api.get).mockResolvedValue([]);
+    renderComProvedores(<PaginaInicial />);
+
+    expect(await screen.findByText('Nenhum edital cadastrado')).toBeInTheDocument();
+    expect(screen.getByText(/npm run seed/)).toBeInTheDocument();
+  });
+
+  test('API fora do ar vira instrucao, nao tela branca', async () => {
+    vi.mocked(api.get).mockRejectedValue(new Error('conexao recusada'));
+    renderComProvedores(<PaginaInicial />);
+
+    expect(await screen.findByText('Não foi possível falar com a API')).toBeInTheDocument();
+    expect(screen.getByText(/docker compose up -d/)).toBeInTheDocument();
+  });
+});
