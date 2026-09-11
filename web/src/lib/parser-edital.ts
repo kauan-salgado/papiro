@@ -18,16 +18,44 @@ const INICIO_DE_ITEM = /^(\d+(?:\.\d+)*)\s*[-–).]?\s+(.*)$/;
  * Codigo de item dentro de um paragrafo corrido.
  *
  * Duas ancoras seguram os falsos positivos:
- *   1. o codigo so conta no inicio da linha ou depois de "." / ":" — e o que
- *      separa "6.2 Papeis do controlador" (item novo) de "Lei no 13.709/2018"
- *      (numero no meio da frase);
+ *   1. o codigo so conta no inicio da linha ou logo depois de "." ":" "," ou
+ *      ")" — e o que separa "6.2 Papeis do controlador" (item novo) de
+ *      "Lei no 13.709/2018" (numero no meio da frase). Virgula e parentese
+ *      entraram porque edital de verdade escreve "17.2 IPS (...), 17.3 SIEM";
  *   2. o texto seguinte precisa comecar em maiuscula — "802.11 aplicados a..."
  *      continua sendo conteudo, e "27001: sistema de gestao" tambem.
  */
-const ITEM_NO_MEIO = /(?:^|(?<=[.:])\s+)(\d+(?:\.\d+)*)\s+(?=\p{Lu})/gu;
+const ITEM_NO_MEIO = /(?:^|(?<=[.:,)])\s+)(\d+(?:\.\d+)*)[.)]?\s+(?=\p{Lu})/gu;
 
 /** Separador entre codigo e texto que algumas bancas usam: "1.1 - ", "1.2) ". */
 const SEPARADOR_APOS_CODIGO = /^(\d+(?:\.\d+)*)\s*[-–)]\s+/;
+
+/** Titulo de disciplina seguido de conteudo na mesma linha: "REDES: 1 Modelo OSI." */
+const DISCIPLINA_COM_CONTEUDO = /^([\p{Lu}][\p{Lu}\s,\-/()]{3,}):\s*(\S.*)$/u;
+
+/** Linha terminada em codigo solto — o PDF quebrou entre o numero e o texto. */
+const CODIGO_ORFAO_NO_FIM = /\s\d+(?:\.\d+)*[.)]?$/;
+
+/**
+ * Junta as linhas que o PDF partiu no meio de um codigo. Sem isto, "… nomes. 6"
+ * perde o item 6 inteiro: o numero fica sem texto e o texto fica sem numero.
+ */
+function costurarCodigosPartidos(linhas: readonly string[]): string[] {
+  const costuradas: string[] = [];
+
+  for (const linha of linhas) {
+    const anterior = costuradas.at(-1);
+
+    if (anterior !== undefined && CODIGO_ORFAO_NO_FIM.test(anterior)) {
+      costuradas[costuradas.length - 1] = `${anterior} ${linha}`;
+      continue;
+    }
+
+    costuradas.push(linha);
+  }
+
+  return costuradas;
+}
 
 /** Cabecalho de disciplina: linha sem numeracao, em caixa alta ou terminada em ":". */
 function ehCabecalhoDeDisciplina(linha: string): boolean {
@@ -86,11 +114,19 @@ export function analisarEdital(texto: string, disciplinaPadrao = DISCIPLINA_PADR
   const itens: ItemAnalisado[] = [];
   let disciplinaAtual = disciplinaPadrao;
 
-  for (const linhaBruta of texto.split('\n')) {
-    const linha = limpar(linhaBruta);
+  const linhas = costurarCodigosPartidos(
+    texto.split('\n').map(limpar).filter((linha) => linha.length > 0),
+  );
 
-    if (!linha) {
-      continue;
+  for (const linhaBruta of linhas) {
+    let linha = linhaBruta;
+
+    // "COMPUTAÇÃO EM NUVEM: Conceitos ..." — titulo e conteudo na mesma linha.
+    const comConteudo = DISCIPLINA_COM_CONTEUDO.exec(linha);
+
+    if (comConteudo?.[1] && comConteudo[2] && !INICIO_DE_ITEM.test(linha)) {
+      disciplinaAtual = comConteudo[1].trim();
+      linha = comConteudo[2];
     }
 
     for (const pedaco of separarItensDaLinha(linha)) {
@@ -102,15 +138,24 @@ export function analisarEdital(texto: string, disciplinaPadrao = DISCIPLINA_PADR
 
       if (pedaco.codigo === null) {
         const anterior = itens.at(-1);
+        // Trecho que comeca em minuscula nunca inicia item nem disciplina: e
+        // continuacao, mesmo que o item anterior tenha terminado em ":".
+        const continuaFrase = /^\p{Ll}/u.test(conteudo);
+
         const itemAberto =
           anterior !== undefined &&
           anterior.disciplina === disciplinaAtual &&
-          !/[.;:]$/.test(anterior.descricao);
+          (continuaFrase || !/[.;:]$/.test(anterior.descricao));
 
-        // Item aberto manda mais que aparencia de cabecalho. O PDF quebra a
-        // frase no meio e, se ela quebrar antes de uma sigla, a linha seguinte
-        // ("HTTPS.") parece um titulo em caixa alta sem ser um.
-        if (itemAberto) {
+        // Cabecalho terminado em ":" e inequivoco e interrompe qualquer item
+        // aberto: em edital, uma disciplina nova costuma comecar logo depois de
+        // um item que ficou sem ponto final.
+        const ehCabecalhoInequivoco = conteudo.endsWith(':') && ehCabecalhoDeDisciplina(conteudo);
+
+        // Fora esse caso, item aberto manda mais que aparencia de cabecalho: o
+        // PDF quebra a frase no meio e, se ela quebrar antes de uma sigla, a
+        // linha seguinte ("HTTPS.") parece um titulo em caixa alta sem ser um.
+        if (itemAberto && !ehCabecalhoInequivoco) {
           itens[itens.length - 1] = {
             ...anterior,
             descricao: `${anterior.descricao} ${conteudo}`,

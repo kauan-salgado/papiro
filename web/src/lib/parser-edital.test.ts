@@ -73,6 +73,87 @@ describe('analisarEdital — texto sujo de PDF', () => {
     expect(itens.every((i) => i.disciplina === 'REDES')).toBe(true);
   });
 
+  test('aceita numeracao com ponto no meio do paragrafo', () => {
+    // Formato real de edital: "17. Conceitos: ... 18. NIST ...". Sem isto, o
+    // ponto depois do numero fazia o item passar batido.
+    const itens = analisarEdital(
+      'SEGURANÇA: 17. Conceitos de IDS e IPS. 18. NIST Cybersecurity Framework. 19. Extended Detection and Response.',
+    );
+
+    expect(itens.map((i) => i.codigoEdital)).toEqual(['17', '18', '19']);
+    expect(itens[1]?.descricao).toBe('NIST Cybersecurity Framework.');
+  });
+
+  test('cabecalho de disciplina interrompe item aberto quando termina em dois-pontos', () => {
+    // Diferente da sigla solta ("HTTPS."), um cabecalho terminado em ":" e
+    // inequivoco — e em edital ele costuma vir logo apos um item sem ponto final.
+    const itens = analisarEdital(`
+      RACIOCÍNIO LÓGICO: 1 Estruturas lógicas. 2 Lógica de argumentação
+      ATUALIDADES: 1 Tópicos relevantes e atuais.
+    `);
+
+    expect(itens).toHaveLength(3);
+    expect(itens[2]).toEqual({
+      disciplina: 'ATUALIDADES',
+      codigoEdital: '1',
+      descricao: 'Tópicos relevantes e atuais.',
+    });
+  });
+
+  test('junta o codigo que ficou orfao no fim da linha', () => {
+    // O PDF quebra entre o numero e o texto: "... Sistemas de nomes. 6" e o
+    // item continua na linha seguinte.
+    const itens = analisarEdital(`
+      REDES
+      1.1 Modelo OSI. Sistemas de nomes. 6
+      Noções de gerência de redes: SNMP e RMON.
+    `);
+
+    expect(itens).toHaveLength(2);
+    expect(itens[1]).toMatchObject({
+      codigoEdital: '6',
+      descricao: 'Noções de gerência de redes: SNMP e RMON.',
+    });
+  });
+
+  test('separa disciplina e conteudo quando vem na mesma linha sem numeracao', () => {
+    // "COMPUTAÇÃO EM NUVEM: Conceitos de..." — disciplina sem itens numerados.
+    const itens = analisarEdital('COMPUTAÇÃO EM NUVEM: Conceitos básicos. Modelos de nuvem.');
+
+    expect(itens.every((i) => i.disciplina === 'COMPUTAÇÃO EM NUVEM')).toBe(true);
+    expect(itens[0]?.descricao).toBe('Conceitos básicos. Modelos de nuvem.');
+  });
+
+  test('continuacao em minuscula emenda mesmo depois de dois-pontos', () => {
+    const itens = analisarEdital(`
+      ATUALIDADES
+      2 Inteligência Artificial: fundamentos e aplicações:
+      conceitos de IA; aprendizado de máquina.
+    `);
+
+    expect(itens).toHaveLength(1);
+    expect(itens[0]?.descricao).toContain('aprendizado de máquina');
+  });
+
+  test('reconhece item que vem depois de virgula ou parentese', () => {
+    // Formato real: "17.2 IPS (Intrusion Prevention System), 17.3 SIEM (...) 18. NIST".
+    // O 17.3 vem apos virgula e o 18 apos parentese — sem isso, dois itens
+    // do edital sumiam em silencio.
+    const itens = analisarEdital(
+      'SEGURANÇA: 17.2 IPS (Intrusion Prevention System), 17.3 SIEM (Security Information) 18. NIST Framework.',
+    );
+
+    expect(itens.map((i) => i.codigoEdital)).toEqual(['17.2', '17.3', '18']);
+  });
+
+  test('nao confunde ano ou numero de norma apos pontuacao com codigo de item', () => {
+    const itens = analisarEdital(
+      'NORMAS: 1 Normas ABNT NBR ISO/IEC 27002: 2022, ABNT NBR ISO/IEC 27005:2019. 2 Gestão de riscos.',
+    );
+
+    expect(itens.map((i) => i.codigoEdital)).toEqual(['1', '2']);
+  });
+
   test('separa itens de um paragrafo corrido', () => {
     const itens = analisarEdital(
       'SEGURANÇA DA INFORMAÇÃO: 1 Conceitos básicos. 1.1 Confidencialidade. 1.2 Integridade.',
