@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { env } from '../env.js';
 import { prisma } from '../lib/prisma.js';
 
 export const healthRoutes = Router();
@@ -18,6 +19,8 @@ healthRoutes.get('/health', async (_req, res) => {
       data: {
         status: 'ok',
         service: 'papiro-api',
+        // O front usa isto para avisar o visitante antes que ele esbarre num 403.
+        modoDemonstracao: env.MODO_DEMO,
         banco: {
           conectado: true,
           latenciaMs: Math.round(performance.now() - inicio),

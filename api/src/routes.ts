@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { env } from './env.js';
+import { modoDemonstracao } from './middlewares/modo-demo.js';
 import { cargosRoutes } from './modules/cargos/cargos.routes.js';
 import { concursosRoutes } from './modules/concursos/concursos.routes.js';
 import { dashboardRoutes } from './modules/dashboard/dashboard.routes.js';
@@ -8,13 +10,24 @@ import { simuladosRoutes } from './modules/simulados/simulados.routes.js';
 import { topicosRoutes } from './modules/topicos/topicos.routes.js';
 import { healthRoutes } from './routes/health.routes.js';
 
-export const routes = Router();
+/**
+ * A flag entra por parametro, com o ambiente como padrao: o teste liga e
+ * desliga o modo demonstracao sem precisar mexer em variavel de processo.
+ */
+export function criarRotas({ modoDemo = env.MODO_DEMO }: { modoDemo?: boolean } = {}) {
+  const routes = Router();
 
-routes.use(healthRoutes);
-routes.use('/concursos', concursosRoutes);
-routes.use('/cargos', cargosRoutes);
-routes.use('/disciplinas', disciplinasRoutes);
-routes.use('/topicos', topicosRoutes);
-routes.use('/simulados', simuladosRoutes);
-routes.use('/sessoes', sessoesRoutes);
-routes.use('/dashboard', dashboardRoutes);
+  // Antes de qualquer rota: em demonstracao publica, nada de apagar edital.
+  routes.use(modoDemonstracao(modoDemo));
+
+  routes.use(healthRoutes);
+  routes.use('/concursos', concursosRoutes);
+  routes.use('/cargos', cargosRoutes);
+  routes.use('/disciplinas', disciplinasRoutes);
+  routes.use('/topicos', topicosRoutes);
+  routes.use('/simulados', simuladosRoutes);
+  routes.use('/sessoes', sessoesRoutes);
+  routes.use('/dashboard', dashboardRoutes);
+
+  return routes;
+}

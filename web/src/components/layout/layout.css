@@ -144,3 +144,19 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* ------------------------------------------------------------ aviso demo -- */
+
+.aviso-demo {
+  margin: 0;
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--text-small);
+  text-align: center;
+  color: var(--color-ink);
+  background-color: var(--color-accent-wash);
+  border-block-end: 1px solid var(--color-rule);
+}
+
+.aviso-demo strong {
+  color: var(--color-accent);
+}

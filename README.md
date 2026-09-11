@@ -23,9 +23,10 @@ pelo Postgres, nao apenas pelo formulario.
 | --- | --- |
 | **Ideia central** | Todo agregado e `SUM` sobre uma fact table. Nenhum contador mutavel. |
 | **Regras de negocio** | `CHECK constraint` no Postgres, Zod na API, Zod no formulario — nessa ordem de autoridade |
-| **Testes** | 162 no total: 44 na API (contra Postgres real) e 118 no front |
+| **Testes** | 176 no total: 55 na API (contra Postgres real) e 121 no front |
 | **Cobertura** | API 88,9% de linhas · front 94,7% — limites fixados no `vitest.config.ts` |
 | **Acessibilidade** | 0 falha de contraste WCAG AA nas duas telas, medida sobre os elementos renderizados |
+| **Deploy** | Vercel (front + API serverless na mesma origem) + Neon — ver [docs/DEPLOY.md](docs/DEPLOY.md) |
 
 ---
 
@@ -71,7 +72,7 @@ cd ../web && npm install && npm run dev
 Da raiz do repositorio, para conferir tudo de uma vez:
 
 ```bash
-npm run verificar     # typecheck + 162 testes, API e frontend
+npm run verificar     # typecheck + 176 testes, API e frontend
 ```
 
 O Postgres e publicado na **5433** de proposito, para nao colidir com uma
@@ -287,7 +288,7 @@ PrismaClientKnownRequestError
 ### Testes
 
 ```bash
-cd api && npm test            # 44 testes
+cd api && npm test            # 55 testes
 npm run test:coverage         # relatorio de cobertura
 ```
 
@@ -418,7 +419,7 @@ Tres defeitos reais apareceram nessa verificacao e foram corrigidos:
 ### Testes do frontend
 
 ```bash
-cd web && npm test           # 118 testes
+cd web && npm test           # 121 testes
 npm run test:coverage        # 94,7% de linhas, 93,3% de funcoes, 82,1% de ramos
 ```
 
@@ -539,16 +540,20 @@ Um projeto de portfolio honesto declara o que **nao** fez:
   previa. A previa editavel existe justamente porque isso vai acontecer.
 - **Sem autenticacao.** O projeto assume um unico usuario na propria maquina.
   Colocar isso em rede exigiria `usuario_id` na hierarquia, sessao e
-  autorizacao por linha — mudanca de modelo, nao de tela.
+  autorizacao por linha — mudanca de modelo, nao de tela. Para a vitrine
+  publica existe o `MODO_DEMO`, que recusa as acoes destrutivas com 403; e um
+  limitador de dano, nao um substituto de login.
 - **Sem paginacao.** Um edital tem dezenas de itens e um historico tem dezenas
   de sessoes; `LIMIT` viraria necessario na casa dos milhares.
 - **`npm audit` acusa vulnerabilidades na CLI do Prisma** (`mysql2`,
   `deepmerge-ts`), dependencias de desenvolvimento que nao entram no runtime —
   a API fala Postgres pelo `@prisma/adapter-pg`. Corrigir com `audit fix --force`
   faria downgrade da CLI.
-- **Sem deploy.** O projeto roda localmente por `docker compose`; nao ha
-  ambiente publicado. O `Dockerfile` da API ja tem estagio de producao, mas
-  ninguem o executou fora da maquina de desenvolvimento.
+- **Deploy configurado, ainda nao executado.** `docs/DEPLOY.md` traz a
+  configuracao completa para Vercel + Neon, e os arquivos (`vercel.json` dos
+  dois projetos, entrypoint serverless, modo demonstracao) estao no repositorio
+  com testes. Mas a primeira publicacao depende de contas que so o dono cria, e
+  ninguem viu esse desenho rodar hospedado — pode exigir ajuste.
 
 ### Proximos passos naturais
 

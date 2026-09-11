@@ -10,6 +10,14 @@ const envSchema = z.object({
   API_PORT: z.coerce.number().int().positive().default(3333),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL e obrigatoria'),
   WEB_ORIGIN: z.string().url().default('http://localhost:5173'),
+  /**
+   * Liga a protecao da vitrine publica. Fica desligado por padrao: quem roda o
+   * projeto na propria maquina e dono dos proprios dados.
+   */
+  MODO_DEMO: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((valor) => valor === 'true'),
 });
 
 const parsed = envSchema.safeParse(process.env);
