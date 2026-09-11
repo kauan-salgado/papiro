@@ -79,7 +79,9 @@ Papiro/
 │   └── src/
 │       ├── middlewares/  # erro terminal, 404
 │       ├── routes/       # rotas por recurso
-│       ├── lib/          # client do Prisma (instancia unica)
+│       ├── http/        # envelope, erros, traducao dos erros do Postgres
+│       ├── lib/         # client do Prisma, helpers de data
+│       ├── modules/     # um diretorio por recurso (routes + schema + service)
 │       ├── app.ts        # composicao do Express
 │       ├── env.ts        # validacao Zod das variaveis de ambiente
 │       └── server.ts     # bootstrap
@@ -181,6 +183,105 @@ recriar. Rodar duas vezes nao duplica nada.
 
 ---
 
+## API
+
+Todas as respostas usam o mesmo envelope, no sucesso e no erro:
+
+```jsonc
+{ "success": true,  "data": { /* ... */ }, "error": null }
+{ "success": false, "data": null, "error": "Dados invalidos.",
+  "detalhes": { "fieldErrors": { "tempoMinutos": ["O tempo de estudo precisa ser maior que zero."] } } }
+```
+
+| Metodo | Rota | O que faz |
+| --- | --- | --- |
+| `GET` | `/api/health` | Sonda: confirma que a API alcanca o banco |
+| `GET POST` | `/api/concursos` | Lista e cria concursos |
+| `GET PATCH DELETE` | `/api/concursos/:id` | Le, altera e apaga (em cascata) |
+| `GET POST` | `/api/cargos` | Lista (filtro `?concursoId=`) e cria |
+| `GET PATCH DELETE` | `/api/cargos/:id` | Le, altera e apaga |
+| `GET` | `/api/cargos/:id/edital` | **Edital verticalizado inteiro com metricas** |
+| `POST` | `/api/cargos/:id/edital/importar` | **Importacao em lote** de itens do edital |
+| `GET POST` | `/api/disciplinas` | Lista (filtro `?cargoId=`) e cria |
+| `GET PATCH DELETE` | `/api/disciplinas/:id` | Le, altera e apaga |
+| `GET POST` | `/api/topicos` | Lista (filtro `?disciplinaId=`) e cria |
+| `GET PATCH DELETE` | `/api/topicos/:id` | Le, altera e apaga |
+| `GET` | `/api/topicos/:id/sessoes` | Historico de sessoes do topico |
+| `GET POST` | `/api/simulados` | Lista (filtro `?cargoId=`) e cria |
+| `GET` | `/api/simulados/:id` | Consolidado do simulado por disciplina |
+| `PATCH DELETE` | `/api/simulados/:id` | Altera e apaga (sessoes sobrevivem) |
+| `POST` | `/api/sessoes` | **Registra uma sessao de estudo** |
+| `DELETE` | `/api/sessoes/:id` | Exclui uma sessao |
+| `GET` | `/api/dashboard/disciplinas` | Visao macro (filtro `?cargoId=`) |
+| `GET` | `/api/dashboard/topicos/:disciplinaId` | Visao micro, do pior % de acerto ao melhor |
+
+### Tres camadas de validacao, na ordem
+
+Registrar uma sessao passa por tres filtros, e cada um existe por um motivo
+diferente:
+
+1. **Zod**, na borda HTTP. Uniao discriminada por `tipoEstudo`, espelhando a
+   regra condicional das questoes nos dois sentidos. Devolve 400 com erro por
+   campo, pronto para o formulario destacar.
+2. **Regra de dominio**, no service. Simulado e sessao precisam ser do mesmo
+   cargo — o banco nao tem como saber disso, porque a relacao passa por
+   `topico -> disciplina -> cargo`.
+3. **`CHECK constraint`**, no Postgres. Nunca deveria disparar vindo da API;
+   existe para o `INSERT` que vier pelo Adminer, por um script de importacao ou
+   por uma versao futura da aplicacao que esqueceu a regra.
+
+O erro `23514` do Postgres e tratado como **validacao, nao como defeito**: vira
+400 com a explicacao da regra, e nao 500. O Prisma 7 embrulha o erro do driver,
+entao a traducao procura em `meta.driverAdapterError.cause`:
+
+```text
+PrismaClientKnownRequestError
+  code: 'P2039'
+  meta.driverAdapterError.cause.code: '23514'
+  meta.driverAdapterError.cause.message: '... violates check constraint "chk_questoes_obrigatorias"'
+                                                                          ↑ daqui sai a mensagem ao usuario
+```
+
+### Decisoes da camada HTTP
+
+- **Sem wrapper de async.** O Express 5 encaminha rejeicao de handler async
+  direto para o handler de erro. O `asyncHandler` que todo projeto Express 4
+  carrega virou codigo morto.
+- **Service layer so onde ha logica.** CRUD fino fala com o Prisma direto no
+  router; `sessoes`, `cargos/edital` e `dashboard` tem service porque tem regra.
+  Criar uma camada de servico que so repassa chamada e indireção sem ganho.
+- **Casts no SQL das views.** `COUNT` e `SUM` voltam como `BIGINT`, que chega no
+  JavaScript como `BigInt` — e `JSON.stringify` lanca excecao em `BigInt`. Os
+  `::int` e `::float` nas queries resolvem no banco o que seria remendo no Node.
+- **A saida das views tambem e validada por Zod.** Se alguem alterar uma coluna
+  e esquecer da API, o erro aparece com mensagem clara, e nao como `undefined`
+  chegando no grafico.
+
+### Testes
+
+```bash
+cd api && npm test            # 44 testes
+npm run test:coverage         # relatorio de cobertura
+```
+
+Cobertura atual: **88,9% de linhas, 90% de funcoes, 72,3% de ramos** — os
+limites minimos estao fixados no `vitest.config.ts`, entao derrubar a cobertura
+quebra o comando.
+
+Os testes de integracao falam com o **Postgres de verdade**, sem mock de banco.
+Nao e preciosismo: metade das regras deste projeto vive em `CHECK constraint` e
+em views SQL, e mock nenhum reproduz isso. Cada arquivo cria o proprio concurso
+com nome prefixado por `__teste`, e o apaga no final — o `CASCADE` limpa o
+resto.
+
+Um dos testes existe so para provar a decisao de modelagem: registra uma sessao,
+confere o agregado subir no dashboard, exclui a sessao e confere o agregado
+voltar. Com contador mutavel no topico, esse numero teria ficado inflado para
+sempre.
+
+
+---
+
 ## Decisoes tecnicas
 
 As decisoes de modelagem (por que `Concurso` e a raiz, por que `Simulado` e
@@ -250,6 +351,6 @@ um objeto qualquer.
 
 - [x] **1. Infraestrutura** — Docker Compose, monorepo, health check ponta a ponta
 - [x] **2. Schema e migrations** — `schema.prisma`, CHECKs, views SQL e seed em lote
-- [ ] **3. API** — CRUD do edital, `POST /api/sessoes`, rotas de dashboard
+- [x] **3. API** — CRUD do edital, importacao em lote, sessoes e dashboards
 - [ ] **4. Frontend** — edital verticalizado, formulario inline, dashboards
 - [ ] **5. README de portfolio** — arquitetura, decisoes, GIF do dashboard
