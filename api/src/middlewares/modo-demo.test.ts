@@ -1,7 +1,7 @@
-import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { createApp } from '../app.js';
 import { prisma } from '../lib/prisma.js';
+import { como, criarUsuarioDeTeste, removerUsuarioDeTeste } from '../test/apoio.js';
 
 /**
  * O modo demonstracao existe para a vitrine publica sobreviver a visitantes.
@@ -11,6 +11,12 @@ import { prisma } from '../lib/prisma.js';
 const demo = createApp({ modoDemo: true });
 const normal = createApp({ modoDemo: false });
 
+// O mesmo usuario nos dois apps: o que muda entre eles e a protecao da
+// vitrine, nao quem esta pedindo.
+let comoDemo: ReturnType<typeof como>;
+let comoNormal: ReturnType<typeof como>;
+let usuarioId = 0;
+
 const NOME_DO_CONCURSO = `__teste_demo__ ${Date.now()}`;
 
 let concursoId = 0;
@@ -19,32 +25,37 @@ let disciplinaId = 0;
 let topicoId = 0;
 
 beforeAll(async () => {
-  const concurso = await request(normal)
+  const autenticado = await criarUsuarioDeTeste('modo-demo');
+  comoDemo = como(demo, autenticado.cookie);
+  comoNormal = como(normal, autenticado.cookie);
+  usuarioId = autenticado.usuario.id;
+
+  const concurso = await comoNormal
     .post('/api/concursos')
     .send({ nome: NOME_DO_CONCURSO })
     .expect(201);
   concursoId = concurso.body.data.id;
 
-  const cargo = await request(normal)
+  const cargo = await comoNormal
     .post('/api/cargos')
     .send({ concursoId, nome: 'Cargo da demo' })
     .expect(201);
   cargoId = cargo.body.data.id;
 
-  await request(normal)
+  await comoNormal
     .post(`/api/cargos/${cargoId}/edital/importar`)
     .send({ itens: [{ disciplina: 'Redes', codigoEdital: '1.1', descricao: 'Modelo OSI.' }] })
     .expect(201);
 
-  const disciplinas = await request(normal).get(`/api/disciplinas?cargoId=${cargoId}`).expect(200);
+  const disciplinas = await comoNormal.get(`/api/disciplinas?cargoId=${cargoId}`).expect(200);
   disciplinaId = disciplinas.body.data[0].id;
 
-  const topicos = await request(normal).get(`/api/topicos?disciplinaId=${disciplinaId}`).expect(200);
+  const topicos = await comoNormal.get(`/api/topicos?disciplinaId=${disciplinaId}`).expect(200);
   topicoId = topicos.body.data[0].id;
 });
 
 afterAll(async () => {
-  await prisma.concurso.deleteMany({ where: { nome: { startsWith: '__teste_demo__' } } });
+  await removerUsuarioDeTeste(usuarioId);
   await prisma.$disconnect();
 });
 
@@ -55,14 +66,14 @@ describe('modo demonstracao — o que ele bloqueia', () => {
     ['disciplina', () => `/api/disciplinas/${disciplinaId}`],
     ['topico', () => `/api/topicos/${topicoId}`],
   ])('recusa apagar %s', async (_rotulo, caminho) => {
-    const resposta = await request(demo).delete(caminho()).expect(403);
+    const resposta = await comoDemo.delete(caminho()).expect(403);
 
     expect(resposta.body.error).toContain('demonstração pública');
     expect(resposta.body.detalhes).toEqual({ modoDemonstracao: true });
   });
 
   test('recusa importacao que substitui o edital existente', async () => {
-    await request(demo)
+    await comoDemo
       .post(`/api/cargos/${cargoId}/edital/importar`)
       .send({ itens: [{ disciplina: 'X', codigoEdital: '9.9', descricao: 'Item.' }], substituir: true })
       .expect(403);
@@ -76,7 +87,7 @@ describe('modo demonstracao — o que ele bloqueia', () => {
 
 describe('modo demonstracao — o que ele permite', () => {
   test('registrar sessao de estudo', async () => {
-    const resposta = await request(demo)
+    const resposta = await comoDemo
       .post('/api/sessoes')
       .send({ topicoId, tempoMinutos: 40, tipoEstudo: 'Teoria' })
       .expect(201);
@@ -85,44 +96,44 @@ describe('modo demonstracao — o que ele permite', () => {
   });
 
   test('excluir a propria sessao recem-registrada', async () => {
-    const criada = await request(demo)
+    const criada = await comoDemo
       .post('/api/sessoes')
       .send({ topicoId, tempoMinutos: 25, tipoEstudo: 'Resumo' })
       .expect(201);
 
-    await request(demo).delete(`/api/sessoes/${criada.body.data.id}`).expect(204);
+    await comoDemo.delete(`/api/sessoes/${criada.body.data.id}`).expect(204);
   });
 
   test('criar um edital novo e importar itens sem substituir', async () => {
-    const concurso = await request(demo)
+    const concurso = await comoDemo
       .post('/api/concursos')
       .send({ nome: `${NOME_DO_CONCURSO} — visitante` })
       .expect(201);
 
-    const cargo = await request(demo)
+    const cargo = await comoDemo
       .post('/api/cargos')
       .send({ concursoId: concurso.body.data.id, nome: 'Cargo do visitante' })
       .expect(201);
 
-    await request(demo)
+    await comoDemo
       .post(`/api/cargos/${cargo.body.data.id}/edital/importar`)
       .send({ itens: [{ disciplina: 'Redes', codigoEdital: '1.1', descricao: 'Modelo OSI.' }] })
       .expect(201);
   });
 
   test('ler dashboards e edital', async () => {
-    await request(demo).get(`/api/cargos/${cargoId}/edital`).expect(200);
-    await request(demo).get(`/api/dashboard/disciplinas?cargoId=${cargoId}`).expect(200);
+    await comoDemo.get(`/api/cargos/${cargoId}/edital`).expect(200);
+    await comoDemo.get(`/api/dashboard/disciplinas?cargoId=${cargoId}`).expect(200);
   });
 });
 
 describe('modo desligado (uso local)', () => {
   test('apagar o proprio edital volta a funcionar', async () => {
-    const concurso = await request(normal)
+    const concurso = await comoNormal
       .post('/api/concursos')
       .send({ nome: `${NOME_DO_CONCURSO} — local` })
       .expect(201);
 
-    await request(normal).delete(`/api/concursos/${concurso.body.data.id}`).expect(204);
+    await comoNormal.delete(`/api/concursos/${concurso.body.data.id}`).expect(204);
   });
 });

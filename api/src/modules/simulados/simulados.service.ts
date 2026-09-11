@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { NaoEncontradoError } from '../../http/erros.js';
+import { filtroSimulado } from '../../http/posse.js';
 import { formatarDataISO } from '../../lib/datas.js';
 import { prisma } from '../../lib/prisma.js';
 import { linhaConsolidadoSchema } from './simulados.schema.js';
@@ -11,9 +12,9 @@ import { linhaConsolidadoSchema } from './simulados.schema.js';
  * sessoes que alimentam o desempenho por topico se reagrupam, sem duplicacao
  * de dado, na leitura "como foi a prova inteira".
  */
-export async function consolidarSimulado(simuladoId: number) {
-  const simulado = await prisma.simulado.findUnique({
-    where: { id: simuladoId },
+export async function consolidarSimulado(simuladoId: number, usuarioId: number) {
+  const simulado = await prisma.simulado.findFirst({
+    where: { id: simuladoId, ...filtroSimulado(usuarioId) },
     include: { cargo: { select: { id: true, nome: true, concursoId: true } } },
   });
 

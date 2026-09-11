@@ -54,12 +54,20 @@ const VISAO_MICRO_SQL = `
   FROM vw_desempenho_topico
 `;
 
-/** Visao macro: como as disciplinas de um cargo se comparam entre si. */
-export async function desempenhoPorDisciplina(cargoId?: number) {
+/**
+ * Visao macro: como as disciplinas de um cargo se comparam entre si.
+ *
+ * O `usuario_id` entra em TODA consulta de dashboard. As views agregam sobre o
+ * banco inteiro; sem esse filtro, o total de horas de um usuario apareceria
+ * somado ao de outro.
+ */
+export async function desempenhoPorDisciplina(usuarioId: number, cargoId?: number) {
   const linhas = await prisma.$queryRawUnsafe(
     `${VISAO_MACRO_SQL}
-     WHERE ($1::int IS NULL OR cargo_id = $1::int)
+     WHERE usuario_id = $1::int
+       AND ($2::int IS NULL OR cargo_id = $2::int)
      ORDER BY "percentualAcerto" ASC NULLS LAST, "disciplina" ASC`,
+    usuarioId,
     cargoId ?? null,
   );
 
@@ -71,11 +79,13 @@ export async function desempenhoPorDisciplina(cargoId?: number) {
  * acerto. Topico ainda sem questoes resolvidas vai para o fim da lista — ele
  * nao esta indo mal, so nao foi medido ainda.
  */
-export async function desempenhoPorTopico(disciplinaId: number) {
+export async function desempenhoPorTopico(usuarioId: number, disciplinaId: number) {
   const linhas = await prisma.$queryRawUnsafe(
     `${VISAO_MICRO_SQL}
-     WHERE disciplina_id = $1::int
+     WHERE usuario_id = $1::int
+       AND disciplina_id = $2::int
      ORDER BY "percentualAcerto" ASC NULLS LAST, "ordem" ASC`,
+    usuarioId,
     disciplinaId,
   );
 
@@ -83,11 +93,13 @@ export async function desempenhoPorTopico(disciplinaId: number) {
 }
 
 /** Metricas de todos os topicos de um cargo, para montar o edital verticalizado. */
-export async function desempenhoDosTopicosDoCargo(cargoId: number) {
+export async function desempenhoDosTopicosDoCargo(usuarioId: number, cargoId: number) {
   const linhas = await prisma.$queryRawUnsafe(
     `${VISAO_MICRO_SQL}
-     WHERE cargo_id = $1::int
+     WHERE usuario_id = $1::int
+       AND cargo_id = $2::int
      ORDER BY "disciplinaId" ASC, "ordem" ASC, "topicoId" ASC`,
+    usuarioId,
     cargoId,
   );
 

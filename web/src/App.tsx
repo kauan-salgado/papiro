@@ -1,8 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { Guarda } from './components/layout/Guarda.js';
 import { Layout } from './components/layout/Layout.js';
 import { PaginaDesempenho } from './paginas/PaginaDesempenho.js';
 import { PaginaEdital } from './paginas/PaginaEdital.js';
+import { PaginaEntrar } from './paginas/PaginaEntrar.js';
 import { PaginaImportar } from './paginas/PaginaImportar.js';
 import { PaginaInicial } from './paginas/PaginaInicial.js';
 import { PaginaNovoEdital } from './paginas/PaginaNovoEdital.js';
@@ -28,12 +30,18 @@ export function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
-            <Route path="/" element={<PaginaInicial />} />
-            <Route path="/novo" element={<PaginaNovoEdital />} />
-            <Route path="/cargos/:cargoId/importar" element={<PaginaImportar />} />
-            <Route path="/cargos/:cargoId/edital" element={<PaginaEdital />} />
-            <Route path="/cargos/:cargoId/dashboard" element={<PaginaDesempenho />} />
-            <Route path="/cargos/:cargoId/dashboard/:disciplinaId" element={<PaginaDesempenho />} />
+            {/* Unica tela publica: e por onde se entra. */}
+            <Route path="/entrar" element={<PaginaEntrar />} />
+
+            <Route path="/" element={<Guarda><PaginaInicial /></Guarda>} />
+            <Route path="/novo" element={<Guarda><PaginaNovoEdital /></Guarda>} />
+            <Route path="/cargos/:cargoId/importar" element={<Guarda><PaginaImportar /></Guarda>} />
+            <Route path="/cargos/:cargoId/edital" element={<Guarda><PaginaEdital /></Guarda>} />
+            <Route path="/cargos/:cargoId/dashboard" element={<Guarda><PaginaDesempenho /></Guarda>} />
+            <Route
+              path="/cargos/:cargoId/dashboard/:disciplinaId"
+              element={<Guarda><PaginaDesempenho /></Guarda>}
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

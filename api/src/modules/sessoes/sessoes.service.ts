@@ -1,4 +1,5 @@
-import { RequisicaoInvalidaError } from '../../http/erros.js';
+import { NaoEncontradoError, RequisicaoInvalidaError } from '../../http/erros.js';
+import { filtroSessao, filtroSimulado, filtroTopico } from '../../http/posse.js';
 import { formatarDataISO, paraDataDoBanco } from '../../lib/datas.js';
 import { prisma } from '../../lib/prisma.js';
 import type { CriarSessao } from './sessoes.schema.js';
@@ -32,13 +33,17 @@ const SELECAO_PADRAO = {
 async function garantirSimuladoDoMesmoCargo(
   topicoId: number,
   simuladoId: number,
+  usuarioId: number,
 ): Promise<void> {
   const [topico, simulado] = await Promise.all([
-    prisma.topico.findUnique({
-      where: { id: topicoId },
+    prisma.topico.findFirst({
+      where: { id: topicoId, ...filtroTopico(usuarioId) },
       select: { disciplina: { select: { cargoId: true } } },
     }),
-    prisma.simulado.findUnique({ where: { id: simuladoId }, select: { cargoId: true } }),
+    prisma.simulado.findFirst({
+      where: { id: simuladoId, ...filtroSimulado(usuarioId) },
+      select: { cargoId: true },
+    }),
   ]);
 
   if (!simulado) {
@@ -52,9 +57,20 @@ async function garantirSimuladoDoMesmoCargo(
   }
 }
 
-export async function registrarSessao(dados: CriarSessao) {
+export async function registrarSessao(dados: CriarSessao, usuarioId: number) {
+  // O topico precisa ser do proprio usuario: sem isto, bastaria mandar o id do
+  // topico de outra pessoa para gravar estudo na conta dela.
+  const topico = await prisma.topico.findFirst({
+    where: { id: dados.topicoId, ...filtroTopico(usuarioId) },
+    select: { id: true },
+  });
+
+  if (!topico) {
+    throw new NaoEncontradoError('Topico', dados.topicoId);
+  }
+
   if (dados.simuladoId) {
-    await garantirSimuladoDoMesmoCargo(dados.topicoId, dados.simuladoId);
+    await garantirSimuladoDoMesmoCargo(dados.topicoId, dados.simuladoId, usuarioId);
   }
 
   const sessao = await prisma.sessaoEstudo.create({
@@ -75,9 +91,9 @@ export async function registrarSessao(dados: CriarSessao) {
   return paraDTO(sessao);
 }
 
-export async function listarSessoesDoTopico(topicoId: number) {
+export async function listarSessoesDoTopico(topicoId: number, usuarioId: number) {
   const sessoes = await prisma.sessaoEstudo.findMany({
-    where: { topicoId },
+    where: { topicoId, ...filtroSessao(usuarioId) },
     orderBy: [{ data: 'desc' }, { id: 'desc' }],
     select: SELECAO_PADRAO,
   });
@@ -85,6 +101,12 @@ export async function listarSessoesDoTopico(topicoId: number) {
   return sessoes.map(paraDTO);
 }
 
-export async function excluirSessao(id: number): Promise<void> {
-  await prisma.sessaoEstudo.delete({ where: { id } });
+export async function excluirSessao(id: number, usuarioId: number): Promise<void> {
+  const { count } = await prisma.sessaoEstudo.deleteMany({
+    where: { id, ...filtroSessao(usuarioId) },
+  });
+
+  if (count === 0) {
+    throw new NaoEncontradoError('Sessao', id);
+  }
 }

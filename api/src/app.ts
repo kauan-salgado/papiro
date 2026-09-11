@@ -1,3 +1,4 @@
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import { env } from './env.js';
@@ -12,8 +13,10 @@ import { criarRotas } from './routes.js';
 export function createApp({ modoDemo }: { modoDemo?: boolean } = {}) {
   const app = express();
 
-  app.use(cors({ origin: env.WEB_ORIGIN }));
+  // credentials: o cookie de sessao precisa viajar nas requisicoes do front.
+  app.use(cors({ origin: env.WEB_ORIGIN, credentials: true }));
   app.use(express.json({ limit: '1mb' }));
+  app.use(cookieParser());
 
   app.use('/api', criarRotas({ modoDemo }));
 

@@ -30,17 +30,54 @@ enum TipoEstudo {
   @@map("tipo_estudo_enum")
 }
 
-/// Nivel raiz. Sem ele, "Seguranca da Informacao" do edital A e do edital B
-/// colidiriam, apesar de serem itens distintos de bancas distintas.
+/// Quem estuda. A identidade vem do GitHub: o projeto nao guarda senha de
+/// ninguem, e por isso nao tem como vazar uma.
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  /// Identificador numerico do GitHub — imutavel, ao contrario do login.
+  githubId  String   @unique @map("github_id") @db.VarChar(40)
+  login     String   @db.VarChar(80)
+  nome      String?  @db.VarChar(120)
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  concursos    Concurso[]
+  sessoesAuth  SessaoAuth[]
+
+  @@map("usuarios")
+}
+
+/// Sessao de login. Fica no banco, e nao em JWT, para poder ser revogada:
+/// sair de verdade precisa invalidar o que ja foi emitido.
+model SessaoAuth {
+  /// Token opaco sorteado no servidor; e o que viaja no cookie httpOnly.
+  token     String   @id @db.VarChar(64)
+  usuarioId Int      @map("usuario_id")
+  expiraEm  DateTime @map("expira_em") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId], map: "idx_sessoes_auth_usuario")
+  @@index([expiraEm], map: "idx_sessoes_auth_expiracao")
+  @@map("sessoes_auth")
+}
+
+/// Nivel raiz do edital, e a ancora da autorizacao: tudo abaixo pertence ao
+/// dono deste registro. Uma unica clausula `usuarioId` protege a hierarquia
+/// inteira — cargo, disciplina, topico, sessao e simulado.
 model Concurso {
   id        Int       @id @default(autoincrement())
+  usuarioId Int       @map("usuario_id")
   nome      String    @db.VarChar(150)
   banca     String?   @db.VarChar(80)
   dataProva DateTime? @map("data_prova") @db.Date
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  cargos Cargo[]
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  cargos  Cargo[]
 
+  @@index([usuarioId], map: "idx_concursos_usuario")
   @@map("concursos")
 }
 

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { sucesso } from '../../http/envelope.js';
 import { filtroOpcional, idParamSchema } from '../../http/params.js';
+import { idDoUsuario } from '../../middlewares/autenticacao.js';
 import { criarSessaoSchema } from './sessoes.schema.js';
 import { excluirSessao, listarSessoesDoTopico, registrarSessao } from './sessoes.service.js';
 
@@ -14,7 +15,7 @@ sessoesRoutes.get('/', async (req, res) => {
     return;
   }
 
-  res.json(sucesso(await listarSessoesDoTopico(topicoId)));
+  res.json(sucesso(await listarSessoesDoTopico(topicoId, idDoUsuario(req))));
 });
 
 /**
@@ -28,13 +29,13 @@ sessoesRoutes.get('/', async (req, res) => {
 sessoesRoutes.post('/', async (req, res) => {
   const dados = criarSessaoSchema.parse(req.body);
 
-  res.status(201).json(sucesso(await registrarSessao(dados)));
+  res.status(201).json(sucesso(await registrarSessao(dados, idDoUsuario(req))));
 });
 
 sessoesRoutes.delete('/:id', async (req, res) => {
   const { id } = idParamSchema.parse(req.params);
 
-  await excluirSessao(id);
+  await excluirSessao(id, idDoUsuario(req));
 
   res.status(204).send();
 });

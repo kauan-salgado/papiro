@@ -160,3 +160,40 @@
 .aviso-demo strong {
   color: var(--color-accent);
 }
+
+/* ---------------------------------------------------------------- conta -- */
+
+.cabecalho-app__direita {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.conta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.conta__foto {
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--color-rule);
+  object-fit: cover;
+}
+
+.conta__nome {
+  font-size: var(--text-small);
+  color: var(--color-ink-soft);
+  max-inline-size: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .conta__nome {
+    display: none;
+  }
+}

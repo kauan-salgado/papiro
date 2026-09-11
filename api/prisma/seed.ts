@@ -42,9 +42,25 @@ function agruparPorDisciplina(
  * Reimporta um edital do zero. O delete em cascata limpa cargos, disciplinas,
  * topicos e sessoes daquele concurso — rodar o seed duas vezes nao duplica nada.
  */
-async function importarEdital(edital: EditalSeed): Promise<number> {
+/**
+ * Dono dos editais de exemplo. O github_id sintetico nunca colide com um id do
+ * GitHub, que e sempre numerico — entao esta conta nunca e assumida por
+ * ninguem que entre de verdade.
+ */
+async function contaDeDemonstracao(): Promise<number> {
+  const usuario = await prisma.usuario.upsert({
+    where: { githubId: 'demonstracao' },
+    create: { githubId: 'demonstracao', login: 'demonstracao', nome: 'Conta de demonstração' },
+    update: {},
+    select: { id: true },
+  });
+
+  return usuario.id;
+}
+
+async function importarEdital(edital: EditalSeed, usuarioId: number): Promise<number> {
   const { count: removidos } = await prisma.concurso.deleteMany({
-    where: { nome: edital.concurso.nome },
+    where: { nome: edital.concurso.nome, usuarioId },
   });
 
   if (removidos > 0) {
@@ -65,6 +81,7 @@ async function importarEdital(edital: EditalSeed): Promise<number> {
 
   const concurso = await prisma.concurso.create({
     data: {
+      usuarioId,
       nome: edital.concurso.nome,
       banca: edital.concurso.banca,
       dataProva: edital.concurso.dataProva ? new Date(edital.concurso.dataProva) : null,
@@ -120,9 +137,10 @@ async function gerarHistoricoDemo(cargoId: number, semente: number): Promise<voi
 
 async function main(): Promise<void> {
   const comDemo = process.argv.includes('--demo');
+  const usuarioId = await contaDeDemonstracao();
 
   for (const [indice, edital] of EDITAIS.entries()) {
-    const cargoId = await importarEdital(edital);
+    const cargoId = await importarEdital(edital, usuarioId);
 
     if (comDemo) {
       await gerarHistoricoDemo(cargoId, 20260911 + indice);

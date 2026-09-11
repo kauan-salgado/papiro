@@ -2,6 +2,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { createApp } from '../../app.js';
 import { prisma } from '../../lib/prisma.js';
+import { como, criarUsuarioDeTeste, removerUsuarioDeTeste } from '../../test/apoio.js';
 
 /**
  * O simulado como entidade so se justifica se ele conseguir reagrupar as
@@ -9,6 +10,9 @@ import { prisma } from '../../lib/prisma.js';
  * verificam — inclusive que apagar o simulado nao apaga o estudo feito.
  */
 const app = createApp();
+
+let eu: ReturnType<typeof como>;
+let usuarioId = 0;
 const NOME_DO_CONCURSO = `__teste_sim__ ${Date.now()}`;
 
 let cargoId = 0;
@@ -16,19 +20,23 @@ let topicoRedes = 0;
 let topicoSeguranca = 0;
 
 beforeAll(async () => {
-  const concurso = await request(app)
+  const autenticado = await criarUsuarioDeTeste('simulados');
+  eu = como(app, autenticado.cookie);
+  usuarioId = autenticado.usuario.id;
+
+  const concurso = await eu
     .post('/api/concursos')
     .send({ nome: NOME_DO_CONCURSO })
     .expect(201);
 
-  const cargo = await request(app)
+  const cargo = await eu
     .post('/api/cargos')
     .send({ concursoId: concurso.body.data.id, nome: 'Cargo do simulado' })
     .expect(201);
 
   cargoId = cargo.body.data.id;
 
-  await request(app)
+  await eu
     .post(`/api/cargos/${cargoId}/edital/importar`)
     .send({
       itens: [
@@ -49,13 +57,13 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await prisma.concurso.deleteMany({ where: { nome: NOME_DO_CONCURSO } });
+  await removerUsuarioDeTeste(usuarioId);
   await prisma.$disconnect();
 });
 
 describe('simulados', () => {
   test('consolida por disciplina as sessoes que agrupa', async () => {
-    const simulado = await request(app)
+    const simulado = await eu
       .post('/api/simulados')
       .send({ cargoId, nome: 'Simulado 01', data: '2026-08-30' })
       .expect(201);
@@ -63,7 +71,7 @@ describe('simulados', () => {
     const simuladoId = simulado.body.data.id;
     expect(simulado.body.data.data).toBe('2026-08-30');
 
-    await request(app)
+    await eu
       .post('/api/sessoes')
       .send({
         topicoId: topicoRedes,
@@ -76,7 +84,7 @@ describe('simulados', () => {
       })
       .expect(201);
 
-    await request(app)
+    await eu
       .post('/api/sessoes')
       .send({
         topicoId: topicoSeguranca,
@@ -89,7 +97,7 @@ describe('simulados', () => {
       })
       .expect(201);
 
-    const consolidado = await request(app).get(`/api/simulados/${simuladoId}`).expect(200);
+    const consolidado = await eu.get(`/api/simulados/${simuladoId}`).expect(200);
 
     expect(consolidado.body.data.porDisciplina).toHaveLength(2);
     expect(consolidado.body.data.totais).toMatchObject({
@@ -103,16 +111,16 @@ describe('simulados', () => {
   });
 
   test('lista os simulados do cargo com a contagem de sessoes', async () => {
-    const lista = await request(app).get(`/api/simulados?cargoId=${cargoId}`).expect(200);
+    const lista = await eu.get(`/api/simulados?cargoId=${cargoId}`).expect(200);
 
     expect(lista.body.data[0]._count.sessoes).toBe(2);
   });
 
   test('renomear o simulado nao mexe nas sessoes', async () => {
-    const lista = await request(app).get(`/api/simulados?cargoId=${cargoId}`).expect(200);
+    const lista = await eu.get(`/api/simulados?cargoId=${cargoId}`).expect(200);
     const simuladoId = lista.body.data[0].id;
 
-    const alterado = await request(app)
+    const alterado = await eu
       .patch(`/api/simulados/${simuladoId}`)
       .send({ nome: 'Simulado 01 — revisado' })
       .expect(200);
@@ -121,12 +129,12 @@ describe('simulados', () => {
   });
 
   test('apagar o simulado preserva as sessoes (ON DELETE SET NULL)', async () => {
-    const lista = await request(app).get(`/api/simulados?cargoId=${cargoId}`).expect(200);
+    const lista = await eu.get(`/api/simulados?cargoId=${cargoId}`).expect(200);
     const simuladoId = lista.body.data[0].id;
 
-    await request(app).delete(`/api/simulados/${simuladoId}`).expect(204);
+    await eu.delete(`/api/simulados/${simuladoId}`).expect(204);
 
-    const sessoes = await request(app).get(`/api/topicos/${topicoRedes}/sessoes`).expect(200);
+    const sessoes = await eu.get(`/api/topicos/${topicoRedes}/sessoes`).expect(200);
 
     // O estudo aconteceu: o que se perde e so o agrupamento.
     expect(sessoes.body.data).toHaveLength(1);
@@ -134,6 +142,6 @@ describe('simulados', () => {
   });
 
   test('404 para simulado inexistente', async () => {
-    await request(app).get('/api/simulados/999999').expect(404);
+    await eu.get('/api/simulados/999999').expect(404);
   });
 });

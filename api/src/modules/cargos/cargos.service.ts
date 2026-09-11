@@ -1,4 +1,5 @@
 import { NaoEncontradoError } from '../../http/erros.js';
+import { filtroCargo } from '../../http/posse.js';
 import { prisma } from '../../lib/prisma.js';
 import {
   desempenhoDosTopicosDoCargo,
@@ -12,9 +13,9 @@ import type { ImportarEdital, ItemEdital } from './cargos.schema.js';
  * cada um ja com suas metricas. Uma chamada monta a tela inteira — sem isso o
  * front faria uma requisicao por disciplina (o classico waterfall).
  */
-export async function montarEditalVerticalizado(cargoId: number) {
-  const cargo = await prisma.cargo.findUnique({
-    where: { id: cargoId },
+export async function montarEditalVerticalizado(cargoId: number, usuarioId: number) {
+  const cargo = await prisma.cargo.findFirst({
+    where: { id: cargoId, ...filtroCargo(usuarioId) },
     include: { concurso: { select: { id: true, nome: true, banca: true, dataProva: true } } },
   });
 
@@ -23,8 +24,8 @@ export async function montarEditalVerticalizado(cargoId: number) {
   }
 
   const [disciplinas, topicos] = await Promise.all([
-    desempenhoPorDisciplina(cargoId),
-    desempenhoDosTopicosDoCargo(cargoId),
+    desempenhoPorDisciplina(usuarioId, cargoId),
+    desempenhoDosTopicosDoCargo(usuarioId, cargoId),
   ]);
 
   const topicosPorDisciplina = topicos.reduce((mapa, topico) => {
@@ -62,8 +63,15 @@ function agruparPorDisciplina(
  * `substituir`, a importacao e incremental e itens ja existentes (mesma
  * disciplina + mesmo codigo do edital) sao ignorados em vez de duplicados.
  */
-export async function importarEdital(cargoId: number, entrada: ImportarEdital) {
-  const cargo = await prisma.cargo.findUnique({ where: { id: cargoId }, select: { id: true } });
+export async function importarEdital(
+  cargoId: number,
+  usuarioId: number,
+  entrada: ImportarEdital,
+) {
+  const cargo = await prisma.cargo.findFirst({
+    where: { id: cargoId, ...filtroCargo(usuarioId) },
+    select: { id: true },
+  });
 
   if (!cargo) {
     throw new NaoEncontradoError('Cargo', cargoId);

@@ -2,6 +2,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { createApp } from '../../app.js';
 import { prisma } from '../../lib/prisma.js';
+import { como, criarUsuarioDeTeste, removerUsuarioDeTeste } from '../../test/apoio.js';
 
 /**
  * Teste de integracao: sobe o app inteiro e fala com o Postgres do compose.
@@ -11,6 +12,9 @@ import { prisma } from '../../lib/prisma.js';
  * proprio concurso e o apaga no final; o CASCADE leva junto tudo que ele criou.
  */
 const app = createApp();
+
+let eu: ReturnType<typeof como>;
+let usuarioId = 0;
 const NOME_DO_CONCURSO = `__teste__ ${Date.now()}`;
 
 let cargoId = 0;
@@ -18,19 +22,23 @@ let disciplinaId = 0;
 let topicoId = 0;
 
 beforeAll(async () => {
-  const concurso = await request(app)
+  const autenticado = await criarUsuarioDeTeste('sessoes');
+  eu = como(app, autenticado.cookie);
+  usuarioId = autenticado.usuario.id;
+
+  const concurso = await eu
     .post('/api/concursos')
     .send({ nome: NOME_DO_CONCURSO, banca: 'Banca de Teste', dataProva: '2026-11-15' })
     .expect(201);
 
-  const cargo = await request(app)
+  const cargo = await eu
     .post('/api/cargos')
     .send({ concursoId: concurso.body.data.id, nome: 'Cargo de Teste' })
     .expect(201);
 
   cargoId = cargo.body.data.id;
 
-  await request(app)
+  await eu
     .post(`/api/cargos/${cargoId}/edital/importar`)
     .send({
       itens: [
@@ -41,21 +49,21 @@ beforeAll(async () => {
     })
     .expect(201);
 
-  const disciplinas = await request(app).get(`/api/disciplinas?cargoId=${cargoId}`).expect(200);
+  const disciplinas = await eu.get(`/api/disciplinas?cargoId=${cargoId}`).expect(200);
   disciplinaId = disciplinas.body.data.find((d: { nome: string }) => d.nome === 'Redes').id;
 
-  const topicos = await request(app).get(`/api/topicos?disciplinaId=${disciplinaId}`).expect(200);
+  const topicos = await eu.get(`/api/topicos?disciplinaId=${disciplinaId}`).expect(200);
   topicoId = topicos.body.data[0].id;
 });
 
 afterAll(async () => {
-  await prisma.concurso.deleteMany({ where: { nome: { startsWith: NOME_DO_CONCURSO } } });
+  await removerUsuarioDeTeste(usuarioId);
   await prisma.$disconnect();
 });
 
 describe('POST /api/cargos/:id/edital/importar', () => {
   test('monta a hierarquia inteira a partir da lista de itens', async () => {
-    const resposta = await request(app).get(`/api/cargos/${cargoId}/edital`).expect(200);
+    const resposta = await eu.get(`/api/cargos/${cargoId}/edital`).expect(200);
     const { disciplinas } = resposta.body.data;
 
     expect(disciplinas).toHaveLength(2);
@@ -67,7 +75,7 @@ describe('POST /api/cargos/:id/edital/importar', () => {
   });
 
   test('ignora itens repetidos em vez de duplicar o edital', async () => {
-    const resposta = await request(app)
+    const resposta = await eu
       .post(`/api/cargos/${cargoId}/edital/importar`)
       .send({
         itens: [{ disciplina: 'Redes', codigoEdital: '1.1', descricao: 'Modelo OSI e TCP/IP.' }],
@@ -81,7 +89,7 @@ describe('POST /api/cargos/:id/edital/importar', () => {
 
 describe('POST /api/sessoes', () => {
   test('registra uma sessao de Teoria e devolve a data em YYYY-MM-DD', async () => {
-    const resposta = await request(app)
+    const resposta = await eu
       .post('/api/sessoes')
       .send({ topicoId, data: '2026-09-10', tempoMinutos: 50, tipoEstudo: 'Teoria' })
       .expect(201);
@@ -91,7 +99,7 @@ describe('POST /api/sessoes', () => {
   });
 
   test('recusa sessao de Questoes sem os contadores, com erro por campo', async () => {
-    const resposta = await request(app)
+    const resposta = await eu
       .post('/api/sessoes')
       .send({ topicoId, tempoMinutos: 30, tipoEstudo: 'Questoes' })
       .expect(400);
@@ -100,7 +108,7 @@ describe('POST /api/sessoes', () => {
   });
 
   test('recusa contadores em sessao que nao e de Questoes', async () => {
-    await request(app)
+    await eu
       .post('/api/sessoes')
       .send({ topicoId, tempoMinutos: 30, tipoEstudo: 'Resumo', questoesAcertadas: 5 })
       .expect(400);
@@ -109,28 +117,29 @@ describe('POST /api/sessoes', () => {
   test('recusa vinculo a simulado de outro cargo', async () => {
     // O outro cargo e criado aqui, e nao procurado no banco: teste que depende
     // do seed passa na maquina de quem semeou e falha no CI com banco limpo.
-    const outroConcurso = await request(app)
+    const outroConcurso = await eu
       .post('/api/concursos')
       .send({ nome: `${NOME_DO_CONCURSO} — vizinho` })
       .expect(201);
 
-    const outroCargo = await request(app)
+    const outroCargo = await eu
       .post('/api/cargos')
       .send({ concursoId: outroConcurso.body.data.id, nome: 'Cargo vizinho' })
       .expect(201);
 
-    const simuladoAlheio = await prisma.simulado.create({
-      data: { cargoId: outroCargo.body.data.id, nome: '__teste__ simulado alheio' },
-    });
+    const simuladoAlheio = await eu
+      .post('/api/simulados')
+      .send({ cargoId: outroCargo.body.data.id, nome: '__teste__ simulado alheio' })
+      .expect(201);
 
-    const resposta = await request(app)
+    const resposta = await eu
       .post('/api/sessoes')
-      .send({ topicoId, tempoMinutos: 30, tipoEstudo: 'Teoria', simuladoId: simuladoAlheio.id })
+      .send({ topicoId, tempoMinutos: 30, tipoEstudo: 'Teoria', simuladoId: simuladoAlheio.body.data.id })
       .expect(400);
 
     expect(resposta.body.error).toContain('outro cargo');
 
-    await request(app).delete(`/api/concursos/${outroConcurso.body.data.id}`).expect(204);
+    await eu.delete(`/api/concursos/${outroConcurso.body.data.id}`).expect(204);
   });
 });
 
@@ -149,14 +158,14 @@ describe('CHECK constraint do Postgres', () => {
 
 describe('Dashboards', () => {
   test('o agregado sobe ao registrar e volta ao excluir a sessao', async () => {
-    const antes = await request(app)
+    const antes = await eu
       .get(`/api/dashboard/topicos/${disciplinaId}`)
       .expect(200);
     const minutosAntes = antes.body.data.find(
       (t: { topicoId: number }) => t.topicoId === topicoId,
     ).totalMinutos;
 
-    const criada = await request(app)
+    const criada = await eu
       .post('/api/sessoes')
       .send({
         topicoId,
@@ -168,15 +177,15 @@ describe('Dashboards', () => {
       })
       .expect(201);
 
-    const durante = await request(app).get(`/api/dashboard/topicos/${disciplinaId}`).expect(200);
+    const durante = await eu.get(`/api/dashboard/topicos/${disciplinaId}`).expect(200);
     const linha = durante.body.data.find((t: { topicoId: number }) => t.topicoId === topicoId);
 
     expect(linha.totalMinutos).toBe(minutosAntes + 90);
     expect(linha.percentualAcerto).toBe(80);
 
-    await request(app).delete(`/api/sessoes/${criada.body.data.id}`).expect(204);
+    await eu.delete(`/api/sessoes/${criada.body.data.id}`).expect(204);
 
-    const depois = await request(app).get(`/api/dashboard/topicos/${disciplinaId}`).expect(200);
+    const depois = await eu.get(`/api/dashboard/topicos/${disciplinaId}`).expect(200);
     const linhaDepois = depois.body.data.find(
       (t: { topicoId: number }) => t.topicoId === topicoId,
     );
@@ -187,7 +196,7 @@ describe('Dashboards', () => {
   });
 
   test('a visao macro traz o cargo com suas disciplinas', async () => {
-    const resposta = await request(app)
+    const resposta = await eu
       .get(`/api/dashboard/disciplinas?cargoId=${cargoId}`)
       .expect(200);
 

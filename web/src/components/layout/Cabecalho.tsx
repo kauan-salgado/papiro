@@ -1,5 +1,7 @@
 import { Link, NavLink, useMatch, useNavigate } from 'react-router-dom';
 import { useCargos } from '../../hooks/useEdital.js';
+import { useSair, useUsuario } from '../../hooks/useUsuario.js';
+import { Botao } from '../ui/Botao.js';
 import './layout.css';
 
 /**
@@ -12,6 +14,8 @@ export function Cabecalho() {
   const cargoIdAtual = Number(correspondencia?.params.cargoId ?? 0);
   const secaoAtual = correspondencia?.params['*']?.split('/')[0] ?? 'edital';
 
+  const { usuario } = useUsuario();
+  const sair = useSair();
   const { data: cargos = [] } = useCargos();
   const navegar = useNavigate();
   const cargo = cargos.find((item) => item.id === cargoIdAtual);
@@ -23,6 +27,7 @@ export function Cabecalho() {
           Papiro
         </Link>
 
+        <div className="cabecalho-app__direita">
         {cargos.length > 0 && (
           <label className="cabecalho-app__seletor">
             <span className="visualmente-oculto">Concurso e cargo</span>
@@ -41,6 +46,30 @@ export function Cabecalho() {
             </select>
           </label>
         )}
+
+        {usuario && (
+          <div className="conta">
+            {usuario.avatarUrl && (
+              <img
+                className="conta__foto"
+                src={usuario.avatarUrl}
+                alt=""
+                width={28}
+                height={28}
+              />
+            )}
+            <span className="conta__nome">{usuario.nome ?? usuario.login}</span>
+            <Botao
+              variante="texto"
+              type="button"
+              onClick={() => sair.mutate()}
+              disabled={sair.isPending}
+            >
+              sair
+            </Botao>
+          </div>
+        )}
+        </div>
       </div>
 
       {cargo && (

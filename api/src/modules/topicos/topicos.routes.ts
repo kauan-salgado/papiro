@@ -2,7 +2,9 @@ import { Router } from 'express';
 import { sucesso } from '../../http/envelope.js';
 import { NaoEncontradoError } from '../../http/erros.js';
 import { filtroOpcional, idParamSchema } from '../../http/params.js';
+import { filtroDisciplina, filtroTopico } from '../../http/posse.js';
 import { prisma } from '../../lib/prisma.js';
+import { idDoUsuario } from '../../middlewares/autenticacao.js';
 import { listarSessoesDoTopico } from '../sessoes/sessoes.service.js';
 import { atualizarTopicoSchema, criarTopicoSchema } from './topicos.schema.js';
 
@@ -12,7 +14,7 @@ topicosRoutes.get('/', async (req, res) => {
   const { disciplinaId } = filtroOpcional('disciplinaId').parse(req.query);
 
   const topicos = await prisma.topico.findMany({
-    where: disciplinaId ? { disciplinaId } : undefined,
+    where: { ...filtroTopico(idDoUsuario(req)), ...(disciplinaId && { disciplinaId }) },
     orderBy: [{ disciplinaId: 'asc' }, { ordem: 'asc' }, { id: 'asc' }],
   });
 
@@ -21,6 +23,15 @@ topicosRoutes.get('/', async (req, res) => {
 
 topicosRoutes.post('/', async (req, res) => {
   const dados = criarTopicoSchema.parse(req.body);
+
+  const disciplina = await prisma.disciplina.findFirst({
+    where: { id: dados.disciplinaId, ...filtroDisciplina(idDoUsuario(req)) },
+    select: { id: true },
+  });
+
+  if (!disciplina) {
+    throw new NaoEncontradoError('Disciplina', dados.disciplinaId);
+  }
 
   const topico = await prisma.topico.create({
     data: {
@@ -37,8 +48,8 @@ topicosRoutes.post('/', async (req, res) => {
 topicosRoutes.get('/:id', async (req, res) => {
   const { id } = idParamSchema.parse(req.params);
 
-  const topico = await prisma.topico.findUnique({
-    where: { id },
+  const topico = await prisma.topico.findFirst({
+    where: { id, ...filtroTopico(idDoUsuario(req)) },
     include: { disciplina: { select: { id: true, nome: true, cargoId: true } } },
   });
 
@@ -53,15 +64,15 @@ topicosRoutes.get('/:id', async (req, res) => {
 topicosRoutes.get('/:id/sessoes', async (req, res) => {
   const { id } = idParamSchema.parse(req.params);
 
-  res.json(sucesso(await listarSessoesDoTopico(id)));
+  res.json(sucesso(await listarSessoesDoTopico(id, idDoUsuario(req))));
 });
 
 topicosRoutes.patch('/:id', async (req, res) => {
   const { id } = idParamSchema.parse(req.params);
   const dados = atualizarTopicoSchema.parse(req.body);
 
-  const topico = await prisma.topico.update({
-    where: { id },
+  const { count } = await prisma.topico.updateMany({
+    where: { id, ...filtroTopico(idDoUsuario(req)) },
     data: {
       ...(dados.descricao !== undefined && { descricao: dados.descricao }),
       ...(dados.codigoEdital !== undefined && { codigoEdital: dados.codigoEdital ?? null }),
@@ -69,13 +80,23 @@ topicosRoutes.patch('/:id', async (req, res) => {
     },
   });
 
-  res.json(sucesso(topico));
+  if (count === 0) {
+    throw new NaoEncontradoError('Topico', id);
+  }
+
+  res.json(sucesso(await prisma.topico.findUnique({ where: { id } })));
 });
 
 topicosRoutes.delete('/:id', async (req, res) => {
   const { id } = idParamSchema.parse(req.params);
 
-  await prisma.topico.delete({ where: { id } });
+  const { count } = await prisma.topico.deleteMany({
+    where: { id, ...filtroTopico(idDoUsuario(req)) },
+  });
+
+  if (count === 0) {
+    throw new NaoEncontradoError('Topico', id);
+  }
 
   res.status(204).send();
 });

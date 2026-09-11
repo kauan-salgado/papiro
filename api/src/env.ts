@@ -14,6 +14,12 @@ const envSchema = z.object({
    * Liga a protecao da vitrine publica. Fica desligado por padrao: quem roda o
    * projeto na propria maquina e dono dos proprios dados.
    */
+  /**
+   * Credenciais do OAuth App do GitHub. Ausentes, o login fica indisponivel e
+   * a API diz isso claramente, em vez de quebrar no meio do fluxo.
+   */
+  GITHUB_CLIENT_ID: z.string().optional(),
+  GITHUB_CLIENT_SECRET: z.string().optional(),
   MODO_DEMO: z
     .enum(['true', 'false'])
     .default('false')

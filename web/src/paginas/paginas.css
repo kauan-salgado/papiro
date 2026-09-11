@@ -299,3 +299,53 @@
 .importar__texto {
   min-block-size: 14rem;
 }
+
+/* ------------------------------------------------------------------ entrar */
+
+.entrar {
+  max-inline-size: 48ch;
+  margin-block: var(--space-xl);
+}
+
+.entrar__titulo {
+  font-size: var(--text-title);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.entrar__texto {
+  margin-block: var(--space-md) var(--space-lg);
+  font-size: var(--text-lead);
+  color: var(--color-ink-soft);
+}
+
+.entrar__botao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0.7rem 1.3rem;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-paper);
+  background-color: var(--color-ink);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition:
+    transform var(--duration-fast) var(--ease-out-expo),
+    background-color var(--duration-fast) var(--ease-out-expo);
+}
+
+.entrar__botao:hover {
+  background-color: oklch(18% 0.02 60);
+}
+
+.entrar__botao:active {
+  transform: translateY(1px);
+}
+
+.entrar__rodape {
+  margin-block-start: var(--space-lg);
+  max-inline-size: 52ch;
+  font-size: var(--text-caption);
+  color: var(--color-ink-faint);
+}

@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { env } from './env.js';
+import { carregarUsuario, exigirLogin } from './middlewares/autenticacao.js';
 import { modoDemonstracao } from './middlewares/modo-demo.js';
+import { authRoutes } from './modules/auth/auth.routes.js';
 import { cargosRoutes } from './modules/cargos/cargos.routes.js';
 import { concursosRoutes } from './modules/concursos/concursos.routes.js';
 import { dashboardRoutes } from './modules/dashboard/dashboard.routes.js';
@@ -20,7 +22,18 @@ export function criarRotas({ modoDemo = env.MODO_DEMO }: { modoDemo?: boolean } 
   // Antes de qualquer rota: em demonstracao publica, nada de apagar edital.
   routes.use(modoDemonstracao(modoDemo));
 
+  // Identifica quem esta pedindo (sem barrar), para que ate as rotas publicas
+  // saibam se ha alguem logado.
+  routes.use(carregarUsuario);
+
+  // Publicas: sonda de saude e o proprio fluxo de login.
   routes.use(healthRoutes);
+  routes.use(authRoutes);
+
+  // Daqui para baixo, tudo exige sessao. A linha e unica de proposito: rota
+  // nova nasce protegida, em vez de depender de alguem lembrar do middleware.
+  routes.use(exigirLogin);
+
   routes.use('/concursos', concursosRoutes);
   routes.use('/cargos', cargosRoutes);
   routes.use('/disciplinas', disciplinasRoutes);
