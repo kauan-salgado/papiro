@@ -1,0 +1,29 @@
+# deps
+node_modules/
+.pnp
+.pnp.js
+
+# build
+dist/
+build/
+*.tsbuildinfo
+
+# env
+.env
+.env.local
+.env.*.local
+
+# logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# editores / SO
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# cache
+.cache/
+coverage/

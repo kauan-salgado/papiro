@@ -1,0 +1,63 @@
+name: papiro
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: papiro-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-papiro}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-papiro}
+      POSTGRES_DB: ${POSTGRES_DB:-papiro}
+      TZ: America/Sao_Paulo
+      PGTZ: America/Sao_Paulo
+    ports:
+      # 5433 no host de proposito: evita colidir com um Postgres ja instalado localmente.
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - papiro-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-papiro} -d ${POSTGRES_DB:-papiro}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  api:
+    build:
+      context: ./api
+      target: dev
+    container_name: papiro-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      API_PORT: 3333
+      # Dentro da rede do compose a porta do Postgres e sempre 5432 (host: ${POSTGRES_PORT}).
+      DATABASE_URL: postgresql://${POSTGRES_USER:-papiro}:${POSTGRES_PASSWORD:-papiro}@db:5432/${POSTGRES_DB:-papiro}?schema=public
+      WEB_ORIGIN: http://localhost:${WEB_PORT:-5173}
+    ports:
+      - "${API_PORT:-3333}:3333"
+    volumes:
+      # Bind mount do codigo + volume anonimo para preservar o node_modules do container.
+      - ./api:/app
+      - /app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+
+  adminer:
+    image: adminer:4-standalone
+    container_name: papiro-adminer
+    restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+      ADMINER_DESIGN: dracula
+    ports:
+      - "${ADMINER_PORT:-8081}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  papiro-db-data:
+    name: papiro-db-data
