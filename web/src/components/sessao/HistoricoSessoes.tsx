@@ -60,6 +60,14 @@ export function HistoricoSessoes({ alvo, cargoId, textoVazio }: Props) {
 
             <span className="historico__resultado">{resultado(sessao) ?? ''}</span>
 
+            {/* De qual item veio — só faz sentido no histórico da matéria,
+                onde os dois níveis aparecem lado a lado. */}
+            {alvo.tipo !== 'topico' && sessao.topico && (
+              <span className="historico__origem" title={sessao.topico.descricao}>
+                {sessao.topico.codigoEdital ?? 'item'}
+              </span>
+            )}
+
             {sessao.simulado && (
               <span className="historico__simulado" title="Sessão parte de um simulado">
                 {sessao.simulado.nome}

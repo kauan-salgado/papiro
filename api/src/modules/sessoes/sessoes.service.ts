@@ -30,6 +30,9 @@ const SELECAO_PADRAO = {
   observacoes: true,
   createdAt: true,
   simulado: { select: { id: true, nome: true } },
+  // De onde veio a sessao, quando veio de um item do edital: o historico da
+  // disciplina mistura os dois niveis e precisa dizer qual e qual.
+  topico: { select: { id: true, codigoEdital: true, descricao: true } },
 } as const;
 
 /**
@@ -170,15 +173,15 @@ export async function excluirSessao(id: number, usuarioId: number): Promise<void
 }
 
 /**
- * Historico da disciplina: so as baterias avulsas, sem as sessoes dos topicos.
+ * Historico da materia inteira: as baterias avulsas E o estudo dos itens.
  *
- * Misturar as duas coisas aqui repetiria na tela o que ja aparece item a item
- * logo abaixo — o painel da disciplina existe para mostrar o que NAO tem lugar
- * no edital.
+ * E a mesma leitura que o numero ao lado do nome da disciplina faz — se a
+ * estatistica soma os dois niveis, o historico que a explica tambem precisa
+ * somar, senao os valores nao fecham para quem confere.
  */
 export async function listarSessoesDaDisciplina(disciplinaId: number, usuarioId: number) {
   const sessoes = await prisma.sessaoEstudo.findMany({
-    where: { disciplinaId, topicoId: null, ...filtroSessao(usuarioId) },
+    where: { disciplinaId, ...filtroSessao(usuarioId) },
     orderBy: [{ data: 'desc' }, { id: 'desc' }],
     select: SELECAO_PADRAO,
   });

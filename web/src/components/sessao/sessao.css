@@ -273,3 +273,14 @@
   font-size: var(--text-small);
   color: var(--color-ink-faint);
 }
+
+/* Origem da sessao no historico da materia: qual item do edital a gerou. */
+.historico__origem {
+  padding: 0 0.35rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--color-ink-soft);
+  background-color: var(--color-paper-sunken);
+  border-radius: 2px;
+  cursor: help;
+}

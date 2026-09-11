@@ -29,6 +29,7 @@ function sessao(parcial: Partial<Sessao> = {}): Sessao {
     questoesBrancas: null,
     observacoes: null,
     simulado: null,
+    topico: null,
     ...parcial,
   };
 }
@@ -96,6 +97,34 @@ describe('HistoricoSessoes', () => {
 
     await waitFor(() => expect(api.remover).toHaveBeenCalledWith('/sessoes/77'));
     expect(api.remover).toHaveBeenCalledTimes(1);
+  });
+
+  test('no histórico da matéria, mostra de qual item veio cada sessão', async () => {
+    vi.mocked(api.get).mockResolvedValue([
+      sessao({ id: 9, topico: { id: 3, codigoEdital: '2.1', descricao: 'Criptografia.' } }),
+      sessao({ id: 10, topicoId: null, topico: null }),
+    ]);
+
+    renderComProvedores(
+      <HistoricoSessoes alvo={{ tipo: 'disciplina', id: 5 }} cargoId={CARGO_ID} />,
+    );
+
+    // A que veio de um item mostra o código; a avulsa não mostra nada.
+    expect(await screen.findByText('2.1')).toBeInTheDocument();
+    expect(screen.getAllByText('2.1')).toHaveLength(1);
+  });
+
+  test('no histórico do próprio tópico, não repete o código a cada linha', async () => {
+    vi.mocked(api.get).mockResolvedValue([
+      sessao({ topico: { id: 3, codigoEdital: '2.1', descricao: 'Criptografia.' } }),
+    ]);
+
+    renderComProvedores(
+      <HistoricoSessoes alvo={{ tipo: 'topico', id: TOPICO_ID }} cargoId={CARGO_ID} />,
+    );
+
+    await screen.findByText('Teoria');
+    expect(screen.queryByText('2.1')).not.toBeInTheDocument();
   });
 
   test('cada sessao tem um botao de exclusao com rotulo proprio', async () => {

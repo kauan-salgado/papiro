@@ -83,6 +83,12 @@ export type Sessao = {
   readonly questoesBrancas: number | null;
   readonly observacoes: string | null;
   readonly simulado: { readonly id: number; readonly nome: string } | null;
+  /** Preenchido quando a sessão veio de um item do edital. */
+  readonly topico: {
+    readonly id: number;
+    readonly codigoEdital: string | null;
+    readonly descricao: string;
+  } | null;
 };
 
 export type Simulado = {

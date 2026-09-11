@@ -106,11 +106,26 @@ describe('registro na disciplina', () => {
     expect(linha.totalMinutos).toBe(100); // 60 da bateria + 40 do tópico
   });
 
-  test('o histórico da disciplina traz só as avulsas', async () => {
+  test('o histórico da disciplina mostra os dois níveis, e diz de onde cada um veio', async () => {
+    // Os valores precisam fechar com a estatística ao lado do nome da
+    // disciplina, que soma avulsas e itens.
     const historico = await eu.get(`/api/disciplinas/${disciplinaId}/sessoes`).expect(200);
 
-    expect(historico.body.data).toHaveLength(1);
-    expect(historico.body.data[0].tempoMinutos).toBe(60);
+    expect(historico.body.data).toHaveLength(2);
+
+    const avulsa = historico.body.data.find((s: { topicoId: number | null }) => s.topicoId === null);
+    const doItem = historico.body.data.find((s: { topicoId: number | null }) => s.topicoId !== null);
+
+    expect(avulsa.tempoMinutos).toBe(60);
+    expect(avulsa.topico).toBeNull();
+    expect(doItem.tempoMinutos).toBe(40);
+    expect(doItem.topico.codigoEdital).toBe('1.1');
+
+    const soma = historico.body.data.reduce(
+      (total: number, s: { tempoMinutos: number }) => total + s.tempoMinutos,
+      0,
+    );
+    expect(soma).toBe(100); // o mesmo total que o dashboard mostra
   });
 });
 
