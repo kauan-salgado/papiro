@@ -60,6 +60,9 @@ export function Cabecalho() {
             <NavLink to={`/cargos/${cargo.id}/dashboard`} className="abas__aba" end={false}>
               Desempenho
             </NavLink>
+            <NavLink to={`/cargos/${cargo.id}/importar`} className="abas__aba">
+              Importar
+            </NavLink>
           </nav>
         </div>
       )}

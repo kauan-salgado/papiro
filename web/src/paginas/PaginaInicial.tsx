@@ -24,7 +24,12 @@ export function PaginaInicial() {
     return (
       <EstadoVazio
         titulo="Nenhum edital cadastrado"
-        descricao="Rode o seed para importar os editais de exemplo: npm run seed -- --demo, dentro de api/."
+        descricao="Cadastre o concurso e cole o texto do edital — o reconhecimento monta a lista de tópicos para você conferir."
+        acao={
+          <Link to="/novo" className="cartao__acao">
+            Cadastrar o primeiro edital
+          </Link>
+        }
       />
     );
   }
@@ -43,6 +48,12 @@ export function PaginaInicial() {
           incrementou e esqueceu de corrigir.
         </p>
       </section>
+
+      <div className="abertura__acao">
+        <Link to="/novo" className="cartao__acao">
+          + Novo edital
+        </Link>
+      </div>
 
       <ul className="cartoes">
         {cargos.map((cargo) => (

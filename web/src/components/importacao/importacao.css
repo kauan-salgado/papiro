@@ -1,0 +1,150 @@
+/* --------------------------------------------------------------------------
+   Importacao de edital: caixa de texto, previa editavel, confirmacao.
+   -------------------------------------------------------------------------- */
+
+.importar {
+  display: grid;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background-color: var(--color-paper-raised);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-raised);
+}
+
+.importar__texto {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.importar__opcoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-md);
+}
+
+.importar__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-block-start: var(--space-md);
+  padding-block-start: var(--space-md);
+  border-block-start: 1px solid var(--color-rule);
+}
+
+.importar__substituir {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--text-small);
+  color: var(--color-ink-soft);
+}
+
+.importar__substituir strong {
+  color: var(--color-negative);
+}
+
+.importar__rodape {
+  margin-block-start: var(--space-lg);
+  font-size: var(--text-caption);
+  color: var(--color-ink-faint);
+}
+
+.importar__rodape code {
+  font-family: var(--font-mono);
+}
+
+/* ------------------------------------------------------------------ previa -- */
+
+.previa__grupo {
+  margin-block-end: var(--space-lg);
+}
+
+.previa__disciplina {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-xs);
+  font-size: var(--text-lead);
+  padding-block-end: var(--space-2xs);
+  border-block-end: 1px solid var(--color-rule);
+}
+
+.previa__contagem {
+  padding: 0 0.35rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-weight: 400;
+  color: var(--color-ink-faint);
+  border: 1px solid var(--color-rule);
+  border-radius: 2px;
+}
+
+.previa__itens {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.previa__item {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr 12rem auto;
+  align-items: center;
+  gap: var(--space-xs);
+  padding-block: var(--space-2xs);
+}
+
+.previa__item[data-duplicado='true'] {
+  background-color: oklch(95% 0.03 25);
+  border-inline-start: 2px solid var(--color-negative);
+  padding-inline-start: var(--space-xs);
+}
+
+.previa__item input {
+  inline-size: 100%;
+  padding: 0.3rem 0.45rem;
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  color: var(--color-ink);
+  background-color: var(--color-paper);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  transition: border-color var(--duration-fast) var(--ease-out-expo);
+}
+
+.previa__item input:hover {
+  border-color: var(--color-rule);
+}
+
+.previa__item input:focus-visible {
+  border-color: var(--color-accent);
+}
+
+.previa__codigo,
+.previa__disciplina-campo {
+  font-family: var(--font-mono) !important;
+  font-size: var(--text-caption) !important;
+  color: var(--color-ink-soft);
+}
+
+.previa__aviso {
+  grid-column: 1 / -1;
+  margin: 0 0 var(--space-2xs);
+  font-size: var(--text-caption);
+  color: var(--color-negative);
+}
+
+@media (max-width: 720px) {
+  .previa__item {
+    grid-template-columns: 4rem 1fr auto;
+  }
+
+  .previa__disciplina-campo {
+    grid-column: 2 / -1;
+  }
+}

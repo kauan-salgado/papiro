@@ -3,7 +3,9 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/layout/Layout.js';
 import { PaginaDesempenho } from './paginas/PaginaDesempenho.js';
 import { PaginaEdital } from './paginas/PaginaEdital.js';
+import { PaginaImportar } from './paginas/PaginaImportar.js';
 import { PaginaInicial } from './paginas/PaginaInicial.js';
+import { PaginaNovoEdital } from './paginas/PaginaNovoEdital.js';
 
 /**
  * Estado de servidor fica no React Query; estado de navegacao fica na URL
@@ -27,6 +29,8 @@ export function App() {
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<PaginaInicial />} />
+            <Route path="/novo" element={<PaginaNovoEdital />} />
+            <Route path="/cargos/:cargoId/importar" element={<PaginaImportar />} />
             <Route path="/cargos/:cargoId/edital" element={<PaginaEdital />} />
             <Route path="/cargos/:cargoId/dashboard" element={<PaginaDesempenho />} />
             <Route path="/cargos/:cargoId/dashboard/:disciplinaId" element={<PaginaDesempenho />} />

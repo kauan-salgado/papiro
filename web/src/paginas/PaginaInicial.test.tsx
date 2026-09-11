@@ -58,12 +58,26 @@ describe('PaginaInicial', () => {
     expect(await screen.findByText('banca não informada')).toBeInTheDocument();
   });
 
-  test('banco sem editais orienta a rodar o seed', async () => {
+  test('banco sem editais oferece a tela de cadastro, e nao o terminal', async () => {
+    // Antes esta tela mandava rodar `npm run seed` no terminal — o app pedindo
+    // que o usuario saisse do app. Agora o caminho vazio leva ao cadastro.
     vi.mocked(api.get).mockResolvedValue([]);
     renderComProvedores(<PaginaInicial />);
 
     expect(await screen.findByText('Nenhum edital cadastrado')).toBeInTheDocument();
-    expect(screen.getByText(/npm run seed/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Cadastrar o primeiro edital' })).toHaveAttribute(
+      'href',
+      '/novo',
+    );
+  });
+
+  test('oferece cadastrar um edital novo mesmo com a lista cheia', async () => {
+    renderComProvedores(<PaginaInicial />);
+
+    expect(await screen.findByRole('link', { name: '+ Novo edital' })).toHaveAttribute(
+      'href',
+      '/novo',
+    );
   });
 
   test('API fora do ar vira instrucao, nao tela branca', async () => {

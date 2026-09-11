@@ -21,8 +21,8 @@ pelo Postgres, nao apenas pelo formulario.
 | --- | --- |
 | **Ideia central** | Todo agregado e `SUM` sobre uma fact table. Nenhum contador mutavel. |
 | **Regras de negocio** | `CHECK constraint` no Postgres, Zod na API, Zod no formulario — nessa ordem de autoridade |
-| **Testes** | 130 no total: 44 na API (contra Postgres real) e 86 no front |
-| **Cobertura** | API 88,9% de linhas · front 89,7% — limites fixados no `vitest.config.ts` |
+| **Testes** | 162 no total: 44 na API (contra Postgres real) e 118 no front |
+| **Cobertura** | API 88,9% de linhas · front 94,7% — limites fixados no `vitest.config.ts` |
 | **Acessibilidade** | 0 falha de contraste WCAG AA nas duas telas, medida sobre os elementos renderizados |
 
 ---
@@ -69,7 +69,7 @@ cd ../web && npm install && npm run dev
 Da raiz do repositorio, para conferir tudo de uma vez:
 
 ```bash
-npm run verificar     # typecheck + 130 testes, API e frontend
+npm run verificar     # typecheck + 162 testes, API e frontend
 ```
 
 O Postgres e publicado na **5433** de proposito, para nao colidir com uma
@@ -111,7 +111,7 @@ Papiro/
 │       ├── components/   # por feature: edital/, sessao/, dashboard/, ui/
 │       ├── hooks/        # React Query por recurso
 │       ├── lib/          # cliente HTTP e formatadores
-│       ├── paginas/      # uma por rota
+│       ├── paginas/      # uma por rota (inclui importacao de edital)
 │       └── styles/       # tokens.css e global.css
 ├── db/
 │   ├── schema.sql        # tabelas, enum, CHECKs e indices (leitura humana)
@@ -307,6 +307,49 @@ sempre.
 
 ---
 
+## Como o edital entra
+
+![Tela de importação: texto colado à esquerda, prévia editável abaixo](docs/importar-edital.jpeg)
+
+O caso de uso e sempre o mesmo: a pessoa tem o PDF do edital aberto e quer os
+itens dentro do sistema sem digitar setenta linhas. Ha tres caminhos, do mais
+usado ao mais tecnico:
+
+**1. Colar o texto (tela `Importar`).** Copie o trecho de conhecimentos
+especificos do PDF e cole. O parser reconhece a numeracao, agrupa por
+disciplina e mostra uma **previa editavel** — nada e gravado ate voce conferir.
+
+O parser trata o texto sujo que sai de PDF:
+
+| Entrada | O que ele faz |
+| --- | --- |
+| `SEGURANÇA: 1 Conceitos. 1.1 Confidencialidade.` | separa itens de paragrafo corrido |
+| `3.2 Protocolos: DNS, HTTP e`<br>`HTTPS.` | emenda a frase quebrada, mesmo com a continuacao em caixa alta |
+| `4.1 Lei nº 13.709/2018 (LGPD).` | nao confunde o numero da lei com codigo de item |
+| `1.1 - Modelo OSI.` / `1.2) IPv6.` | aceita os separadores que as bancas usam |
+
+Ele **nao** promete acertar sempre — bancas numeram de jeitos diferentes. Por
+isso a previa e editavel e a mensagem diz, com todas as letras, que nada foi
+gravado ainda. Errar na previa custa uma correcao; errar depois de gravar
+custa uma limpeza no banco.
+
+**2. Importacao em lote pela API**, para quem ja tem os itens estruturados:
+
+```bash
+curl -X POST http://localhost:3333/api/cargos/3/edital/importar \
+  -H 'Content-Type: application/json' \
+  -d '{"itens":[{"disciplina":"Redes","codigoEdital":"1.1","descricao":"Modelo OSI."}]}'
+```
+
+**3. Seed script**, para popular do zero em ambiente novo: `npm run seed`.
+
+Os tres desembocam no mesmo servico transacional: ou o edital entra inteiro, ou
+nao entra nada; item ja existente (mesma disciplina e mesmo codigo) e ignorado
+em vez de duplicado.
+
+
+---
+
 ## Frontend
 
 ![Edital verticalizado com o formulário inline aberto](docs/edital-verticalizado.jpeg)
@@ -373,8 +416,8 @@ Tres defeitos reais apareceram nessa verificacao e foram corrigidos:
 ### Testes do frontend
 
 ```bash
-cd web && npm test           # 86 testes
-npm run test:coverage        # 89,7% de linhas, 86,2% de funcoes, 80,7% de ramos
+cd web && npm test           # 118 testes
+npm run test:coverage        # 94,7% de linhas, 93,3% de funcoes, 82,1% de ramos
 ```
 
 Vitest com Testing Library, consultando a interface **pelo que o usuario ve**
@@ -391,6 +434,9 @@ O que esta coberto, e por que cada um importa:
 | `TopicoLinha.test.tsx` | O painel abrir no lugar, o `aria-expanded`/`aria-controls` casarem e o teclado funcionar |
 | `PaginaEdital.test.tsx` | Agrupamento por disciplina, resumo do edital e o topico aberto vivendo na URL |
 | `PaginaDesempenho.test.tsx` | Ordem do ranking, estados vazios e os links de ida e volta entre dashboard e edital |
+| `parser-edital.test.ts` | O reconhecimento do texto de edital: paragrafo corrido, frase quebrada, numero de lei que nao e codigo |
+| `PaginaImportar.test.tsx` | A previa nao gravar nada, a edicao chegar no que e enviado e a opcao destrutiva so aparecer quando ha o que destruir |
+| `PaginaNovoEdital.test.tsx` | Concurso e cargo criados em sequencia, e o caminho ate a importacao |
 | `api.test.ts` | O envelope virando dado ou `ApiError`, preservando os erros por campo |
 | `formatar.test.ts` | Minutos viram horas so aqui — se quebrar, alguem formatou em outro lugar |
 
@@ -481,10 +527,14 @@ um objeto qualquer.
 
 Um projeto de portfolio honesto declara o que **nao** fez:
 
-- **Os editais sao dados de exemplo.** Os itens em `api/prisma/data/` sao
-  aproximacoes escritas para exercitar o modelo, nao a transcricao literal dos
-  editais publicados. O formato de importacao ja e o definitivo — trocar o array
-  `itens` (ou chamar `POST /api/cargos/:id/edital/importar`) basta.
+- **Os editais do seed sao dados de exemplo.** Os itens em `api/prisma/data/`
+  sao aproximacoes escritas para exercitar o modelo, nao a transcricao literal
+  dos editais publicados. Para usar os reais, a tela de importacao resolve:
+  cole o texto do PDF e confira a previa.
+- **O parser e heuristico.** Ele cobre os formatos que testei (paragrafo
+  corrido, uma linha por item, frase quebrada por PDF), e nao um padrao formal —
+  banca com numeracao romana ou com itens em tabela vai exigir correcao na
+  previa. A previa editavel existe justamente porque isso vai acontecer.
 - **Sem autenticacao.** O projeto assume um unico usuario na propria maquina.
   Colocar isso em rede exigiria `usuario_id` na hierarquia, sessao e
   autorizacao por linha — mudanca de modelo, nao de tela.
@@ -496,7 +546,7 @@ Um projeto de portfolio honesto declara o que **nao** fez:
   faria downgrade da CLI.
 - **CI sem execucao comprovada.** O workflow existe
   (`.github/workflows/verificar.yml`: sobe um Postgres 16, aplica as migrations,
-  roda typecheck, os 130 testes com cobertura e o build) e os mesmos comandos
+  roda typecheck, os 162 testes com cobertura e o build) e os mesmos comandos
   passam localmente — mas o repositorio ainda nao foi enviado ao GitHub, entao
   ninguem o viu rodar la.
 
