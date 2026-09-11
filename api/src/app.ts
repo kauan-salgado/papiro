@@ -10,7 +10,9 @@ import { criarRotas } from './routes.js';
  * O Express 5 encaminha rejeicoes de handlers async direto para o handler de
  * erro, entao as rotas nao precisam de try/catch nem de wrapper: basta lancar.
  */
-export function createApp({ modoDemo }: { modoDemo?: boolean } = {}) {
+export function createApp(
+  { modoDemo, vitrinePublica }: { modoDemo?: boolean; vitrinePublica?: boolean } = {},
+) {
   const app = express();
 
   // credentials: o cookie de sessao precisa viajar nas requisicoes do front.
@@ -18,7 +20,7 @@ export function createApp({ modoDemo }: { modoDemo?: boolean } = {}) {
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
 
-  app.use('/api', criarRotas({ modoDemo }));
+  app.use('/api', criarRotas({ modoDemo, vitrinePublica }));
 
   app.use(notFound);
   app.use(errorHandler);

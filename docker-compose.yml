@@ -35,6 +35,10 @@ services:
       # Dentro da rede do compose a porta do Postgres e sempre 5432 (host: ${POSTGRES_PORT}).
       DATABASE_URL: postgresql://${POSTGRES_USER:-papiro}:${POSTGRES_PASSWORD:-papiro}@db:5432/${POSTGRES_DB:-papiro}?schema=public
       WEB_ORIGIN: http://localhost:${WEB_PORT:-5173}
+      MODO_DEMO: ${MODO_DEMO:-false}
+      VITRINE_PUBLICA: ${VITRINE_PUBLICA:-false}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
     ports:
       - "${API_PORT:-3333}:3333"
     volumes:

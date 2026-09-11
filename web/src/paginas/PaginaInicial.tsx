@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useCargos } from '../hooks/useEdital.js';
 import { useCarregarExemplos } from '../hooks/useExemplos.js';
+import { useEhVisitante } from '../hooks/useAmbiente.js';
 import { Botao } from '../components/ui/Botao.js';
 import { Carregando } from '../components/ui/Carregando.js';
 import { EstadoVazio } from '../components/ui/EstadoVazio.js';
@@ -9,6 +10,7 @@ import './paginas.css';
 export function PaginaInicial() {
   const { data: cargos, isPending, isError } = useCargos();
   const exemplos = useCarregarExemplos();
+  const ehVisitante = useEhVisitante();
 
   if (isPending) {
     return <Carregando linhas={4} rotulo="Carregando editais" />;
@@ -62,9 +64,15 @@ export function PaginaInicial() {
       </section>
 
       <div className="abertura__acao">
-        <Link to="/novo" className="cartao__acao">
-          + Novo edital
-        </Link>
+        {ehVisitante ? (
+          <Link to="/entrar" className="cartao__acao">
+            Entrar para criar o meu edital
+          </Link>
+        ) : (
+          <Link to="/novo" className="cartao__acao">
+            + Novo edital
+          </Link>
+        )}
       </div>
 
       <ul className="cartoes">

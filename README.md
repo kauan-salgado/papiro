@@ -30,7 +30,7 @@ pelo Postgres, nao apenas pelo formulario.
 | --- | --- |
 | **Ideia central** | Todo agregado e `SUM` sobre uma fact table. Nenhum contador mutavel. |
 | **Regras de negocio** | `CHECK constraint` no Postgres, Zod na API, Zod no formulario — nessa ordem de autoridade |
-| **Testes** | 219 no total: 88 na API (contra Postgres real) e 131 no front |
+| **Testes** | 234 no total: 99 na API (contra Postgres real) e 135 no front |
 | **Cobertura** | API 88,9% de linhas · front 94,7% — limites fixados no `vitest.config.ts` |
 | **Acessibilidade** | 0 falha de contraste WCAG AA nas duas telas, medida sobre os elementos renderizados |
 | **No ar** | [papiro-concursos.vercel.app](https://papiro-concursos.vercel.app) — Vercel (front + API serverless, mesma origem) + Neon em Sao Paulo |
@@ -348,6 +348,26 @@ protegida, em vez de depender de alguem lembrar do middleware.
 ler, alterar e apagar **cada** recurso da outra — concurso, cargo, disciplina,
 topico, simulado, sessao, edital, dashboard e importacao. Ao final, verifica que
 os dados da primeira continuam intactos. Sao 28 testes so disso.
+
+### Vitrine para quem nao entrou
+
+Com `VITRINE_PUBLICA=true`, quem chega sem conta **nao bate numa tela de login**:
+ele recebe a identidade da conta de demonstracao e navega o edital e os
+dashboards em modo leitura. Um aviso no topo diz o que esta acontecendo e
+oferece o login.
+
+O desenho se paga aqui: o visitante e so mais um `usuario_id`, entao **os mesmos
+filtros de posse** que separam uma conta de outra ja o mantem dentro da
+demonstracao. Nao existe caminho especial, e portanto nao existe caminho
+esquecido.
+
+Duas travas fecham o resto:
+
+- **Identidade emprestada nao escreve.** Qualquer metodo que nao seja `GET`
+  responde 401 com o convite para entrar — inclusive nas telas de cadastro e
+  importacao, que exigem conta de verdade.
+- **`/auth/eu` continua respondendo `null` para o visitante.** Ele nao esta
+  logado; se a rota dissesse o contrario, o front esconderia o botao de entrar.
 
 ### Conta nova
 

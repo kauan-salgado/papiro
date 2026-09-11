@@ -2,6 +2,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { DisciplinaGrupo } from '../components/edital/DisciplinaGrupo.js';
 import { Carregando } from '../components/ui/Carregando.js';
 import { EstadoVazio } from '../components/ui/EstadoVazio.js';
+import { useEhVisitante } from '../hooks/useAmbiente.js';
 import { useEdital } from '../hooks/useEdital.js';
 import { formatarDuracao } from '../lib/formatar.js';
 import './paginas.css';
@@ -11,6 +12,7 @@ export function PaginaEdital() {
   const [parametros, definirParametros] = useSearchParams();
 
   const { data: edital, isPending, isError } = useEdital(Number(cargoId));
+  const ehVisitante = useEhVisitante();
 
   const topicoAberto = parametros.has('topico') ? Number(parametros.get('topico')) : null;
 
@@ -53,7 +55,11 @@ export function PaginaEdital() {
         <p className="resumo-edital__item">
           <strong>{formatarDuracao(minutos)}</strong> investidas
         </p>
-        <p className="resumo-edital__dica">Clique em um tópico para registrar uma sessão.</p>
+        <p className="resumo-edital__dica">
+          {ehVisitante
+            ? 'Clique em um tópico para ver como o registro funciona.'
+            : 'Clique em um tópico para registrar uma sessão.'}
+        </p>
       </section>
 
       {edital.disciplinas.map((disciplina) => (

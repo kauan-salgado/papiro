@@ -88,9 +88,14 @@ authRoutes.get('/auth/github/callback', async (req, res) => {
   }
 });
 
-/** Quem sou eu. Responde 200 com null quando nao ha ninguem — nao e erro. */
+/**
+ * Quem sou eu. Responde 200 com null quando nao ha ninguem — nao e erro.
+ *
+ * Visitante da vitrine tambem responde null: ele nao esta logado, e o front
+ * precisa saber disso para oferecer o login em vez de tratar como conta.
+ */
 authRoutes.get('/auth/eu', (req, res) => {
-  res.json(sucesso(req.usuario ?? null));
+  res.json(sucesso(req.visitante ? null : (req.usuario ?? null)));
 });
 
 authRoutes.post('/auth/sair', async (req, res) => {

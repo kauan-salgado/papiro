@@ -21,6 +21,7 @@ healthRoutes.get('/health', async (_req, res) => {
         service: 'papiro-api',
         // O front usa isto para avisar o visitante antes que ele esbarre num 403.
         modoDemonstracao: env.MODO_DEMO,
+        vitrinePublica: env.VITRINE_PUBLICA,
         banco: {
           conectado: true,
           latenciaMs: Math.round(performance.now() - inicio),

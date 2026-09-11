@@ -1,5 +1,6 @@
 import { Link, NavLink, useMatch, useNavigate } from 'react-router-dom';
 import { useCargos } from '../../hooks/useEdital.js';
+import { useEhVisitante } from '../../hooks/useAmbiente.js';
 import { useSair, useUsuario } from '../../hooks/useUsuario.js';
 import { Botao } from '../ui/Botao.js';
 import './layout.css';
@@ -15,6 +16,7 @@ export function Cabecalho() {
   const secaoAtual = correspondencia?.params['*']?.split('/')[0] ?? 'edital';
 
   const { usuario } = useUsuario();
+  const ehVisitante = useEhVisitante();
   const sair = useSair();
   const { data: cargos = [] } = useCargos();
   const navegar = useNavigate();
@@ -45,6 +47,12 @@ export function Cabecalho() {
               ))}
             </select>
           </label>
+        )}
+
+        {ehVisitante && (
+          <Link to="/entrar" className="cabecalho-app__entrar">
+            Entrar
+          </Link>
         )}
 
         {usuario && (
@@ -89,9 +97,11 @@ export function Cabecalho() {
             <NavLink to={`/cargos/${cargo.id}/dashboard`} className="abas__aba" end={false}>
               Desempenho
             </NavLink>
-            <NavLink to={`/cargos/${cargo.id}/importar`} className="abas__aba">
-              Importar
-            </NavLink>
+            {!ehVisitante && (
+              <NavLink to={`/cargos/${cargo.id}/importar`} className="abas__aba">
+                Importar
+              </NavLink>
+            )}
           </nav>
         </div>
       )}

@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import { env } from './env.js';
-import { carregarUsuario, exigirLogin } from './middlewares/autenticacao.js';
+import {
+  bloquearEscritaDeVisitante,
+  carregarUsuario,
+  exigirLogin,
+} from './middlewares/autenticacao.js';
 import { modoDemonstracao } from './middlewares/modo-demo.js';
 import { authRoutes } from './modules/auth/auth.routes.js';
 import { cargosRoutes } from './modules/cargos/cargos.routes.js';
@@ -17,7 +21,10 @@ import { healthRoutes } from './routes/health.routes.js';
  * A flag entra por parametro, com o ambiente como padrao: o teste liga e
  * desliga o modo demonstracao sem precisar mexer em variavel de processo.
  */
-export function criarRotas({ modoDemo = env.MODO_DEMO }: { modoDemo?: boolean } = {}) {
+export function criarRotas({
+  modoDemo = env.MODO_DEMO,
+  vitrinePublica = env.VITRINE_PUBLICA,
+}: { modoDemo?: boolean; vitrinePublica?: boolean } = {}) {
   const routes = Router();
 
   // Antes de qualquer rota: em demonstracao publica, nada de apagar edital.
@@ -25,7 +32,7 @@ export function criarRotas({ modoDemo = env.MODO_DEMO }: { modoDemo?: boolean } 
 
   // Identifica quem esta pedindo (sem barrar), para que ate as rotas publicas
   // saibam se ha alguem logado.
-  routes.use(carregarUsuario);
+  routes.use(carregarUsuario(vitrinePublica));
 
   // Publicas: sonda de saude e o proprio fluxo de login.
   routes.use(healthRoutes);
@@ -34,6 +41,7 @@ export function criarRotas({ modoDemo = env.MODO_DEMO }: { modoDemo?: boolean } 
   // Daqui para baixo, tudo exige sessao. A linha e unica de proposito: rota
   // nova nasce protegida, em vez de depender de alguem lembrar do middleware.
   routes.use(exigirLogin);
+  routes.use(bloquearEscritaDeVisitante);
 
   routes.use('/concursos', concursosRoutes);
   routes.use('/cargos', cargosRoutes);

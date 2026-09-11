@@ -197,3 +197,16 @@
     display: none;
   }
 }
+
+.cabecalho-app__entrar {
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--color-accent);
+  text-decoration: none;
+  border-block-end: 1px solid transparent;
+  transition: border-color var(--duration-fast) var(--ease-out-expo);
+}
+
+.cabecalho-app__entrar:hover {
+  border-block-end-color: currentColor;
+}

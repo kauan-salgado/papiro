@@ -34,8 +34,11 @@ export function App() {
             <Route path="/entrar" element={<PaginaEntrar />} />
 
             <Route path="/" element={<Guarda><PaginaInicial /></Guarda>} />
-            <Route path="/novo" element={<Guarda><PaginaNovoEdital /></Guarda>} />
-            <Route path="/cargos/:cargoId/importar" element={<Guarda><PaginaImportar /></Guarda>} />
+            <Route path="/novo" element={<Guarda exigirConta><PaginaNovoEdital /></Guarda>} />
+            <Route
+              path="/cargos/:cargoId/importar"
+              element={<Guarda exigirConta><PaginaImportar /></Guarda>}
+            />
             <Route path="/cargos/:cargoId/edital" element={<Guarda><PaginaEdital /></Guarda>} />
             <Route path="/cargos/:cargoId/dashboard" element={<Guarda><PaginaDesempenho /></Guarda>} />
             <Route

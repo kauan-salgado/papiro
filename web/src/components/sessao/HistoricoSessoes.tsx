@@ -1,3 +1,4 @@
+import { useEhVisitante } from '../../hooks/useAmbiente.js';
 import { useExcluirSessao, useSessoesDoTopico } from '../../hooks/useSessoes.js';
 import { formatarData, formatarDuracao } from '../../lib/formatar.js';
 import { ROTULO_TIPO_ESTUDO, type Sessao } from '../../types/api.js';
@@ -24,6 +25,7 @@ function resultado(sessao: Sessao): string | null {
 export function HistoricoSessoes({ topicoId, cargoId }: Props) {
   const { data: sessoes, isPending } = useSessoesDoTopico(topicoId);
   const excluir = useExcluirSessao(cargoId, topicoId);
+  const ehVisitante = useEhVisitante();
 
   if (isPending) {
     return <Carregando linhas={2} rotulo="Carregando histórico" />;
@@ -62,15 +64,17 @@ export function HistoricoSessoes({ topicoId, cargoId }: Props) {
               <span className="historico__observacao">{sessao.observacoes}</span>
             )}
 
-            <Botao
-              variante="perigo"
-              type="button"
-              onClick={() => excluir.mutate(sessao.id)}
-              disabled={excluir.isPending}
-              aria-label={`Excluir sessão de ${formatarData(sessao.data)}`}
-            >
-              excluir
-            </Botao>
+            {!ehVisitante && (
+              <Botao
+                variante="perigo"
+                type="button"
+                onClick={() => excluir.mutate(sessao.id)}
+                disabled={excluir.isPending}
+                aria-label={`Excluir sessão de ${formatarData(sessao.data)}`}
+              >
+                excluir
+              </Botao>
+            )}
           </li>
         ))}
       </ul>

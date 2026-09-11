@@ -20,6 +20,14 @@ const envSchema = z.object({
    */
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
+  /**
+   * Abre uma vitrine somente leitura para quem nao entrou: o visitante enxerga
+   * a conta de demonstracao, sem poder escrever nada.
+   */
+  VITRINE_PUBLICA: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((valor) => valor === 'true'),
   MODO_DEMO: z
     .enum(['true', 'false'])
     .default('false')

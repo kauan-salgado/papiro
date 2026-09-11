@@ -1,4 +1,5 @@
-import { useModoDemonstracao } from '../../hooks/useModoDemonstracao.js';
+import { Link } from 'react-router-dom';
+import { useAmbiente, useEhVisitante } from '../../hooks/useAmbiente.js';
 import './layout.css';
 
 /**
@@ -6,7 +7,22 @@ import './layout.css';
  * de esbarrar num 403, e entende que o limite e da vitrine, nao do projeto.
  */
 export function AvisoDemonstracao() {
-  if (!useModoDemonstracao()) {
+  const ehVisitante = useEhVisitante();
+  const { modoDemonstracao } = useAmbiente();
+
+  // Visitante primeiro: para ele, o que importa nao e a regra da vitrine, e
+  // que o estudo que ele registrar precisa de uma conta para existir.
+  if (ehVisitante) {
+    return (
+      <p className="aviso-demo" role="status">
+        <strong>Você está vendo uma demonstração.</strong> Os editais e as horas abaixo são de
+        exemplo. <Link to="/entrar">Entre com o GitHub</Link> para ter os seus — e registrar o seu
+        estudo.
+      </p>
+    );
+  }
+
+  if (!modoDemonstracao) {
     return null;
   }
 

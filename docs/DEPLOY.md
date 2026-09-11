@@ -111,7 +111,10 @@ DATABASE_URL         = <string pooled do Neon>
 DIRECT_DATABASE_URL  = <string direct do Neon>
 NODE_ENV             = production
 MODO_DEMO            = true
-WEB_ORIGIN           = https://papiro-web.vercel.app
+VITRINE_PUBLICA      = true
+GITHUB_CLIENT_ID     = <do OAuth App>
+GITHUB_CLIENT_SECRET = <do OAuth App>
+WEB_ORIGIN           = https://papiro-concursos.vercel.app
 ```
 
 O build roda `prisma generate && prisma migrate deploy`: o schema sobe junto com
@@ -145,6 +148,27 @@ idempotente: rodar de novo restaura o estado inicial — util se a vitrine
 acumular lixo.
 
 ---
+
+## OAuth do GitHub
+
+Crie um OAuth App em [github.com/settings/developers](https://github.com/settings/developers):
+
+| Campo | Valor |
+| --- | --- |
+| Application name | `Papiro` |
+| Homepage URL | `https://papiro-concursos.vercel.app` |
+| Authorization callback URL | `https://papiro-concursos.vercel.app/api/auth/github/callback` |
+
+O callback aponta para o **dominio do front**, e nao para o da API: o rewrite
+encaminha, e assim o cookie de sessao nasce no dominio que o navegador conhece.
+Apontar direto para `papiro-api.vercel.app` faria o login "funcionar" e o
+usuario voltar deslogado.
+
+## Vitrine e modo demonstracao
+
+`VITRINE_PUBLICA=true` deixa quem nao entrou navegar a conta de demonstracao em
+modo leitura, em vez de bater numa tela de login. Escrita continua exigindo
+conta.
 
 ## Modo demonstracao
 
