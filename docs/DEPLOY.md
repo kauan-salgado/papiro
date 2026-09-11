@@ -6,6 +6,26 @@
 >
 > O que segue e o roteiro para repetir o processo — do zero ou em outra conta.
 
+## Deploy automatico
+
+Os dois projetos estao conectados a `kauan-salgado/papiro`: **push na `main`
+publica**. Como um repositorio alimenta dois projetos, cada um precisa de duas
+configuracoes que nao vem por padrao:
+
+| Projeto | Root Directory | Ignored Build Step |
+| --- | --- | --- |
+| `papiro-api` | `api` | `git diff --quiet HEAD^ HEAD ./` |
+| `papiro-web` | `web` | `git diff --quiet HEAD^ HEAD ./` |
+
+Sem o **Root Directory**, a Vercel tentaria construir a raiz do repositorio, que
+nao tem nem front nem API — os dois builds falham. Sem o **Ignored Build Step**,
+todo push reconstroi os dois projetos, mesmo quando so um deles mudou; o comando
+compara o ultimo commit com o anterior dentro da pasta do projeto e pula o build
+quando nada ali mudou.
+
+Ambos foram aplicados pela API da Vercel, e podem ser conferidos no painel em
+**Settings → Build and Deployment**.
+
 Arquitetura do ambiente hospedado:
 
 ```text
