@@ -1,0 +1,11 @@
+{
+  // O tsconfig principal compila apenas src/ (rootDir limpo para o dist).
+  // O seed e o prisma.config.ts rodam via tsx e nunca sao compilados, mas
+  // precisam ser verificados: codigo que ninguem type-checa e codigo quebrado.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": ["prisma/**/*.ts", "prisma.config.ts", "src/**/*.ts"]
+}

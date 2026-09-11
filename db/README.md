@@ -9,8 +9,8 @@ merece ser lido sem passar por `schema.prisma`.
 
 | Arquivo | Conteudo |
 | --- | --- |
-| `schema.sql` | Tabelas, enum, constraints e indices (etapa 2) |
-| `views.sql` | `vw_desempenho_disciplina` e `vw_desempenho_topico` (etapa 2) |
+| `schema.sql` | Tabelas, enum, CHECK constraints e indices |
+| `views.sql` | `vw_desempenho_disciplina` e `vw_desempenho_topico` |
 
 Regra de manutencao: se uma constraint mudar no `schema.prisma`, ela muda aqui
 no mesmo commit. SQL desatualizado e pior do que SQL ausente.

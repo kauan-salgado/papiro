@@ -27,3 +27,6 @@ yarn-error.log*
 # cache
 .cache/
 coverage/
+
+# Prisma Client gerado (regenerado por `npm run prisma:generate`)
+api/src/generated/

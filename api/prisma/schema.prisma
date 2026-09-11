@@ -1,0 +1,132 @@
+// ---------------------------------------------------------------------------
+// Papiro — modelo de dominio
+//
+// Hierarquia: Concurso -> Cargo -> Disciplina -> Topico -> Sessao de Estudo
+//
+// Duas regras que NAO cabem neste arquivo e vivem na migration escrita a mao
+// (prisma/migrations/*_constraints_e_views/migration.sql):
+//   1. CHECK constraints (o Prisma Schema Language nao os representa)
+//   2. Views de dashboard (vw_desempenho_disciplina / vw_desempenho_topico)
+// Elas sao parte do contrato do banco. Ver db/schema.sql e db/views.sql.
+// ---------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Tipo de estudo de uma sessao. Simulado NAO e um valor daqui:
+/// simulado e entidade propria, porque agrupa varias sessoes.
+enum TipoEstudo {
+  Teoria
+  Revisao  @map("Revisão")
+  Resumo
+  Questoes @map("Questões")
+
+  @@map("tipo_estudo_enum")
+}
+
+/// Nivel raiz. Sem ele, "Seguranca da Informacao" do edital A e do edital B
+/// colidiriam, apesar de serem itens distintos de bancas distintas.
+model Concurso {
+  id        Int       @id @default(autoincrement())
+  nome      String    @db.VarChar(150)
+  banca     String?   @db.VarChar(80)
+  dataProva DateTime? @map("data_prova") @db.Date
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  cargos Cargo[]
+
+  @@map("concursos")
+}
+
+model Cargo {
+  id         Int    @id @default(autoincrement())
+  concursoId Int    @map("concurso_id")
+  nome       String @db.VarChar(150)
+
+  concurso    Concurso     @relation(fields: [concursoId], references: [id], onDelete: Cascade)
+  disciplinas Disciplina[]
+  simulados   Simulado[]
+
+  @@map("cargos")
+}
+
+model Disciplina {
+  id      Int      @id @default(autoincrement())
+  cargoId Int      @map("cargo_id")
+  nome    String   @db.VarChar(120)
+  /// Peso da disciplina na prova. Decimal, nao float: peso e nota, nao medida fisica.
+  peso    Decimal? @default(1) @db.Decimal(4, 2)
+
+  cargo   Cargo    @relation(fields: [cargoId], references: [id], onDelete: Cascade)
+  topicos Topico[]
+
+  @@unique([cargoId, nome])
+  @@map("disciplinas")
+}
+
+model Topico {
+  id           Int     @id @default(autoincrement())
+  disciplinaId Int     @map("disciplina_id")
+  /// Numeracao literal do edital ("17.1", "7.4.2"). Cada banca numera do seu jeito.
+  codigoEdital String? @map("codigo_edital") @db.VarChar(20)
+  /// Texto literal do item do edital, sem reescrita.
+  descricao    String
+  /// Ordem de exibicao no edital verticalizado.
+  ordem        Int?
+
+  disciplina Disciplina     @relation(fields: [disciplinaId], references: [id], onDelete: Cascade)
+  sessoes    SessaoEstudo[]
+
+  @@unique([disciplinaId, codigoEdital])
+  @@map("topicos")
+}
+
+/// Agrupa varias sessoes (uma por disciplina coberta), permitindo tanto a visao
+/// granular por topico quanto a consolidada do simulado inteiro.
+model Simulado {
+  id      Int      @id @default(autoincrement())
+  cargoId Int      @map("cargo_id")
+  nome    String   @db.VarChar(150)
+  data    DateTime @default(dbgenerated("CURRENT_DATE")) @db.Date
+
+  cargo   Cargo          @relation(fields: [cargoId], references: [id], onDelete: Cascade)
+  sessoes SessaoEstudo[]
+
+  @@map("simulados")
+}
+
+/// Fact table. Uma linha por sessao realizada, nunca um contador mutavel.
+/// Todo agregado (minutos, % de acerto) e SUM/GROUP BY em cima daqui.
+model SessaoEstudo {
+  id         Int  @id @default(autoincrement())
+  topicoId   Int  @map("topico_id")
+  /// Opcional: nem toda sessao pertence a um simulado.
+  simuladoId Int? @map("simulado_id")
+
+  data DateTime @default(dbgenerated("CURRENT_DATE")) @db.Date
+  /// Somente minutos. Conversao para horas e da camada de apresentacao.
+  tempoMinutos Int        @map("tempo_minutos")
+  tipoEstudo   TipoEstudo @map("tipo_estudo")
+
+  /// Obrigatorios quando tipoEstudo = Questoes, nulos caso contrario.
+  /// Regra imposta por CHECK constraint (chk_questoes_obrigatorias).
+  questoesAcertadas Int? @map("questoes_acertadas")
+  questoesErradas   Int? @map("questoes_erradas")
+  questoesBrancas   Int? @map("questoes_brancas")
+
+  observacoes String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  topico   Topico    @relation(fields: [topicoId], references: [id], onDelete: Cascade)
+  simulado Simulado? @relation(fields: [simuladoId], references: [id], onDelete: SetNull)
+
+  @@index([topicoId], map: "idx_sessoes_topico")
+  @@index([data], map: "idx_sessoes_data")
+  @@map("sessoes_estudo")
+}
