@@ -10,15 +10,18 @@
   --color-paper-sunken: oklch(94.5% 0.016 85);
   --color-ink: oklch(24% 0.02 60);
   --color-ink-soft: oklch(48% 0.015 60);
-  --color-ink-faint: oklch(64% 0.012 60);
+  /* 54%, e nao 64%: abaixo disso o texto de 12,5px nao alcanca 4.5:1 sobre o papel. */
+  --color-ink-faint: oklch(54% 0.012 60);
   --color-rule: oklch(88% 0.015 80);
 
   /* Acento e cores semanticas (desempenho) */
   --color-accent: oklch(52% 0.15 32);
   --color-accent-ink: oklch(98% 0.01 85);
   --color-accent-wash: oklch(93% 0.04 40);
-  --color-positive: oklch(55% 0.12 145);
-  --color-attention: oklch(68% 0.14 75);
+  /* Escurecidas ate passarem em 4.5:1 sobre papel e sobre cartao: os selos de
+     percentual sao texto de 12,5px, nao decoracao. */
+  --color-positive: oklch(50% 0.12 145);
+  --color-attention: oklch(55% 0.13 70);
   --color-negative: oklch(52% 0.18 25);
 
   /* Tipografia: duas familias, papeis distintos */

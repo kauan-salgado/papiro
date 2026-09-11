@@ -23,7 +23,10 @@ pelo Postgres, nao apenas pelo formulario.
 | ORM | Prisma (migrations versionadas + client tipado) |
 | API | Node.js 22 + Express 5 + TypeScript |
 | Validacao | Zod nas bordas (env, body das requests) |
-| Frontend | React + Vite + TypeScript |
+| Frontend | React 19 + Vite + TypeScript |
+| Dados no front | TanStack Query (servidor) + URL (navegacao) |
+| Formularios | React Hook Form + Zod |
+| Graficos | Recharts, carregado sob demanda |
 | Infra local | Docker Compose (Postgres + API + Adminer) |
 
 ---
@@ -87,7 +90,10 @@ Papiro/
 │       └── server.ts     # bootstrap
 ├── web/                  # React + Vite
 │   └── src/
-│       ├── components/   # organizado por feature, nao por tipo de arquivo
+│       ├── components/   # por feature: edital/, sessao/, dashboard/, ui/
+│       ├── hooks/        # React Query por recurso
+│       ├── lib/          # cliente HTTP e formatadores
+│       ├── paginas/      # uma por rota
 │       └── styles/       # tokens.css e global.css
 ├── db/
 │   ├── schema.sql        # tabelas, enum, CHECKs e indices (leitura humana)
@@ -282,6 +288,72 @@ sempre.
 
 ---
 
+## Frontend
+
+![Edital verticalizado com o formulário inline aberto](docs/edital-verticalizado.jpeg)
+
+Duas telas, cada uma com um trabalho:
+
+**Edital verticalizado** (`/cargos/:id/edital`) — disciplina como cabecalho de
+grupo, topicos como linhas de documento, cada uma com codigo do edital, tempo
+investido, percentual de acerto e data do ultimo estudo. Clicar em um topico
+abre o painel de registro **no lugar**, sem navegar: quem esta varrendo o edital
+nao quer perder a posicao da lista para anotar 40 minutos de estudo.
+
+**Desempenho** (`/cargos/:id/dashboard[/:disciplinaId]`) — visao macro com as
+disciplinas do pior para o melhor percentual de acerto, e visao micro com o
+ranking de topicos da disciplina escolhida. A ordem da lista e literalmente a
+ordem de prioridade de revisao.
+
+### Decisoes da interface
+
+- **Direcao visual: documento impresso.** Papel quente, serifada nos titulos,
+  um unico acento de carimbo. A metafora e a de um edital anotado a mao — nao a
+  de um painel corporativo.
+- **Estado de servidor no React Query, estado de navegacao na URL.** Cargo,
+  disciplina e ate o topico aberto (`?topico=75`) vivem no endereco: recarregar
+  a pagina ou mandar o link para alguem preserva o lugar. Nao existe store de
+  cliente — duplicar em Zustand o que o banco ja e dono de significa manter dois
+  donos da verdade.
+- **Invalidar, nao remendar o cache.** Depois de gravar ou excluir uma sessao,
+  o historico, o edital e os dashboards sao invalidados. Os agregados sao `SUM`
+  no banco: quem sabe o valor novo e o banco, nao o front.
+- **Recharts em chunk separado.** `React.lazy` na pagina de desempenho: quem so
+  registra sessao nunca baixa os 102 kB do grafico.
+- **Formulario espelha a regra do banco.** Uniao discriminada do Zod, igual a do
+  backend. Escolher "Questoes" expande os tres contadores e os torna
+  obrigatorios; sair de "Questoes" limpa os campos, porque deixa-los preenchidos
+  faria o `CHECK constraint` recusar a sessao.
+- **O erro do backend cai no campo certo.** A API devolve `fieldErrors`, e o
+  formulario os aplica com `setError` — inclusive quando quem recusou foi o
+  Postgres. Se um dia o front e o banco discordarem, a mensagem do banco aparece
+  no campo, e nao em um "erro inesperado".
+
+### Verificacao
+
+| Checagem | Resultado |
+| --- | --- |
+| Contraste (WCAG AA, calculado sobre os elementos renderizados) | 0 falhas em 268 elementos na tela do edital, 0 em 95 no dashboard |
+| Nome acessivel em botoes, links e campos | 100% |
+| Hierarquia de titulos | h1 → h2 → h3, sem pulos |
+| Overflow horizontal em 375 px | nenhum |
+| Bundle inicial | 134 kB gz (orcamento: 300 kB) + 102 kB gz de grafico sob demanda |
+
+Tres defeitos reais apareceram nessa verificacao e foram corrigidos:
+
+1. **Contraste.** `--color-ink-faint` dava 3,12:1 em texto de 12,5 px e o selo
+   ambar dava 2,72:1. Os tokens foram escurecidos ate medirem acima de 4,5:1 —
+   calibrados medindo, nao no olho.
+2. **Barras invisiveis no grafico.** O Recharts anima o `path` via
+   `requestAnimationFrame`, que o navegador congela em aba de segundo plano: a
+   barra ficava parada no primeiro quadro. Animacao de entrada desligada.
+3. **Eixo comendo o grafico no celular.** Em 375 px, o rotulo de 210 px sobrava
+   40 px para a barra. O eixo passou a ser responsivo (no ranking, so o codigo
+   do edital — o texto completo ja esta na lista logo abaixo).
+
+
+---
+
 ## Decisoes tecnicas
 
 As decisoes de modelagem (por que `Concurso` e a raiz, por que `Simulado` e
@@ -352,5 +424,5 @@ um objeto qualquer.
 - [x] **1. Infraestrutura** — Docker Compose, monorepo, health check ponta a ponta
 - [x] **2. Schema e migrations** — `schema.prisma`, CHECKs, views SQL e seed em lote
 - [x] **3. API** — CRUD do edital, importacao em lote, sessoes e dashboards
-- [ ] **4. Frontend** — edital verticalizado, formulario inline, dashboards
+- [x] **4. Frontend** — edital verticalizado, formulario inline, dashboards
 - [ ] **5. README de portfolio** — arquitetura, decisoes, GIF do dashboard

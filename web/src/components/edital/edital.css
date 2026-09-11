@@ -1,0 +1,155 @@
+/* --------------------------------------------------------------------------
+   Edital verticalizado: disciplina como cabecalho de grupo, topicos como
+   linhas de documento. A metafora e a de um edital impresso e anotado.
+   -------------------------------------------------------------------------- */
+
+.disciplina {
+  margin-block-end: var(--space-xl);
+}
+
+.disciplina__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding-block-end: var(--space-xs);
+}
+
+.disciplina__nome {
+  font-size: var(--text-title);
+  letter-spacing: -0.015em;
+}
+
+.disciplina__resumo {
+  margin: var(--space-2xs) 0 0;
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+}
+
+.disciplina__desempenho {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.disciplina__link {
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  text-decoration-color: var(--color-rule);
+  transition: color var(--duration-fast) var(--ease-out-expo);
+}
+
+.disciplina__link:hover {
+  color: var(--color-accent);
+}
+
+.disciplina__topicos {
+  margin: var(--space-sm) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ------------------------------------------------------------------ topico -- */
+
+.topico {
+  border-block-end: 1px solid var(--color-rule);
+}
+
+.topico__gatilho {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr auto;
+  align-items: baseline;
+  gap: var(--space-sm);
+  inline-size: 100%;
+  padding: var(--space-sm) var(--space-xs);
+  font-family: inherit;
+  font-size: var(--text-base);
+  text-align: start;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-inline-start: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out-expo),
+    border-color var(--duration-fast) var(--ease-out-expo);
+}
+
+.topico__gatilho:hover {
+  background-color: var(--color-paper-raised);
+  border-inline-start-color: var(--color-rule);
+}
+
+.topico[data-aberto='true'] .topico__gatilho {
+  background-color: var(--color-paper-raised);
+  border-inline-start-color: var(--color-accent);
+}
+
+.topico__codigo {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-faint);
+}
+
+.topico[data-estudado='true'] .topico__codigo {
+  color: var(--color-accent);
+}
+
+.topico__descricao {
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+.topico__metricas {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-soft);
+  white-space: nowrap;
+}
+
+.topico__ultimo,
+.topico__nunca {
+  color: var(--color-ink-faint);
+}
+
+.topico__nunca {
+  font-style: italic;
+}
+
+.topico__painel {
+  padding: var(--space-sm) var(--space-md) var(--space-lg) calc(3.5rem + var(--space-sm));
+  background-color: var(--color-paper-raised);
+  border-inline-start: 2px solid var(--color-accent);
+  animation: abrir-painel var(--duration-normal) var(--ease-out-expo);
+}
+
+@keyframes abrir-painel {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 720px) {
+  .topico__gatilho {
+    grid-template-columns: 3rem 1fr;
+    row-gap: var(--space-2xs);
+  }
+
+  .topico__metricas {
+    grid-column: 2;
+    flex-wrap: wrap;
+  }
+
+  .topico__painel {
+    padding-inline: var(--space-sm);
+  }
+}

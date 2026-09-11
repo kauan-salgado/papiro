@@ -1,0 +1,70 @@
+import { useParams, useSearchParams } from 'react-router-dom';
+import { DisciplinaGrupo } from '../components/edital/DisciplinaGrupo.js';
+import { Carregando } from '../components/ui/Carregando.js';
+import { EstadoVazio } from '../components/ui/EstadoVazio.js';
+import { useEdital } from '../hooks/useEdital.js';
+import { formatarDuracao } from '../lib/formatar.js';
+import './paginas.css';
+
+export function PaginaEdital() {
+  const { cargoId = '0' } = useParams();
+  const [parametros, definirParametros] = useSearchParams();
+
+  const { data: edital, isPending, isError } = useEdital(Number(cargoId));
+
+  const topicoAberto = parametros.has('topico') ? Number(parametros.get('topico')) : null;
+
+  /** O topico aberto vive na URL: recarregar ou compartilhar o link preserva o lugar. */
+  const alternarTopico = (topicoId: number) => {
+    const proximos = new URLSearchParams(parametros);
+
+    if (topicoAberto === topicoId) {
+      proximos.delete('topico');
+    } else {
+      proximos.set('topico', String(topicoId));
+    }
+
+    definirParametros(proximos, { replace: true });
+  };
+
+  if (isPending) {
+    return <Carregando linhas={6} rotulo="Carregando edital" />;
+  }
+
+  if (isError || !edital) {
+    return <EstadoVazio titulo="Edital não encontrado" descricao="Escolha outro edital no seletor acima." />;
+  }
+
+  const topicos = edital.disciplinas.flatMap((disciplina) => disciplina.topicos);
+  const estudados = topicos.filter((topico) => topico.totalSessoes > 0).length;
+  const minutos = edital.disciplinas.reduce((soma, d) => soma + d.totalMinutos, 0);
+  const cobertura = topicos.length > 0 ? Math.round((100 * estudados) / topicos.length) : 0;
+
+  return (
+    <>
+      <section className="resumo-edital" aria-label="Resumo do edital">
+        <p className="resumo-edital__item">
+          <strong>{topicos.length}</strong> tópicos
+        </p>
+        <p className="resumo-edital__item">
+          <strong>{estudados}</strong> estudados
+          <span className="resumo-edital__nota">{cobertura}% do edital</span>
+        </p>
+        <p className="resumo-edital__item">
+          <strong>{formatarDuracao(minutos)}</strong> investidas
+        </p>
+        <p className="resumo-edital__dica">Clique em um tópico para registrar uma sessão.</p>
+      </section>
+
+      {edital.disciplinas.map((disciplina) => (
+        <DisciplinaGrupo
+          key={disciplina.disciplinaId}
+          disciplina={disciplina}
+          cargoId={Number(cargoId)}
+          topicoAberto={topicoAberto}
+          aoAlternarTopico={alternarTopico}
+        />
+      ))}
+    </>
+  );
+}

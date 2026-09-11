@@ -1,0 +1,275 @@
+/* -------------------------------------------------------------- formulario -- */
+
+.formulario-sessao {
+  display: grid;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background-color: var(--color-paper-raised);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-raised);
+}
+
+.formulario-sessao__linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.campo {
+  display: grid;
+  gap: var(--space-2xs);
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+}
+
+.campo--data,
+.campo--tempo {
+  flex: 0 1 10rem;
+}
+
+.campo--observacoes {
+  flex: 2 1 18rem;
+}
+
+.campo__rotulo {
+  font-size: var(--text-caption);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+
+.campo__opcional {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--color-ink-faint);
+}
+
+.campo__entrada {
+  inline-size: 100%;
+  padding: 0.5rem 0.6rem;
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  color: var(--color-ink);
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--duration-fast) var(--ease-out-expo);
+}
+
+.campo__entrada:hover {
+  border-color: var(--color-ink-faint);
+}
+
+.campo__entrada:focus-visible {
+  border-color: var(--color-accent);
+  outline: 2px solid var(--color-accent-wash);
+  outline-offset: 0;
+}
+
+.campo__entrada[aria-invalid='true'] {
+  border-color: var(--color-negative);
+}
+
+.campo__erro {
+  font-size: var(--text-caption);
+  color: var(--color-negative);
+}
+
+.formulario-sessao__tipos,
+.formulario-sessao__questoes {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.formulario-sessao__legenda {
+  padding: 0;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+/* Grupo segmentado: radios com aparencia de abas de fichario. */
+.segmentado {
+  display: inline-flex;
+  flex-wrap: wrap;
+  margin-block-start: var(--space-2xs);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.segmentado__opcao {
+  position: relative;
+}
+
+.segmentado__opcao input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+}
+
+.segmentado__opcao span {
+  display: block;
+  padding: 0.4rem 0.9rem;
+  font-size: var(--text-small);
+  color: var(--color-ink-soft);
+  border-inline-end: 1px solid var(--color-rule);
+  transition:
+    background-color var(--duration-fast) var(--ease-out-expo),
+    color var(--duration-fast) var(--ease-out-expo);
+}
+
+.segmentado__opcao:last-child span {
+  border-inline-end: 0;
+}
+
+.segmentado__opcao input:hover + span {
+  background-color: var(--color-paper-sunken);
+}
+
+.segmentado__opcao input:checked + span {
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+  font-weight: 550;
+}
+
+.segmentado__opcao input:focus-visible + span {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.formulario-sessao__questoes {
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-accent-wash);
+  border-radius: var(--radius-sm);
+  animation: revelar-questoes var(--duration-normal) var(--ease-out-expo);
+}
+
+@keyframes revelar-questoes {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.formulario-sessao__trio {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin-block-start: var(--space-xs);
+}
+
+.formulario-sessao__trio .campo {
+  flex: 1 1 7rem;
+}
+
+.formulario-sessao__erro {
+  margin: 0;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-small);
+  color: var(--color-negative);
+  background-color: oklch(95% 0.03 25);
+  border-inline-start: 3px solid var(--color-negative);
+  border-radius: var(--radius-sm);
+}
+
+.formulario-sessao__acoes {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ---------------------------------------------------------------- historico -- */
+
+.historico {
+  margin-block-start: var(--space-md);
+}
+
+.historico__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-xs);
+  font-family: var(--font-body);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+
+.historico__contagem {
+  padding: 0 0.35rem;
+  font-family: var(--font-mono);
+  color: var(--color-ink-faint);
+  border: 1px solid var(--color-rule);
+  border-radius: 2px;
+}
+
+.historico__lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historico__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0;
+  font-size: var(--text-small);
+  border-block-start: 1px solid var(--color-rule);
+}
+
+.historico__item:hover {
+  background-color: var(--color-paper-raised);
+}
+
+.historico__data {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--color-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.historico__tipo {
+  font-weight: 550;
+}
+
+.historico__tempo,
+.historico__resultado {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-soft);
+}
+
+.historico__simulado {
+  padding: 0 0.35rem;
+  font-size: var(--text-caption);
+  color: var(--color-accent);
+  border: 1px solid currentColor;
+  border-radius: 2px;
+}
+
+.historico__observacao {
+  flex: 1 1 100%;
+  font-size: var(--text-caption);
+  font-style: italic;
+  color: var(--color-ink-soft);
+}
+
+.historico__item .botao--perigo {
+  margin-inline-start: auto;
+}
+
+.historico__vazio {
+  margin: var(--space-md) 0 0;
+  font-size: var(--text-small);
+  color: var(--color-ink-faint);
+}

@@ -1,0 +1,170 @@
+/* --------------------------------------------------------------------------
+   Primitivas de interface. Estados de hover/focus/active desenhados, nao
+   herdados do navegador.
+   -------------------------------------------------------------------------- */
+
+.botao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0.55rem 1.05rem;
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  font-weight: 550;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) var(--ease-out-expo),
+    background-color var(--duration-fast) var(--ease-out-expo),
+    border-color var(--duration-fast) var(--ease-out-expo),
+    color var(--duration-fast) var(--ease-out-expo);
+}
+
+.botao:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.botao:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.botao--primario {
+  background-color: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+.botao--primario:hover:not(:disabled) {
+  background-color: oklch(45% 0.15 32);
+}
+
+.botao--sutil {
+  background-color: transparent;
+  border-color: var(--color-rule);
+  color: var(--color-ink);
+}
+
+.botao--sutil:hover:not(:disabled) {
+  border-color: var(--color-ink-faint);
+  background-color: var(--color-paper-raised);
+}
+
+.botao--texto {
+  background: none;
+  padding-inline: 0.25rem;
+  color: var(--color-ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--color-rule);
+}
+
+.botao--texto:hover:not(:disabled) {
+  color: var(--color-accent);
+  text-decoration-color: currentColor;
+}
+
+.botao--perigo {
+  background: none;
+  padding-inline: 0.25rem;
+  color: var(--color-ink-faint);
+  font-size: var(--text-caption);
+}
+
+.botao--perigo:hover:not(:disabled) {
+  color: var(--color-negative);
+}
+
+/* ------------------------------------------------------------------ selo -- */
+
+.selo {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.45rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.selo[data-faixa='neutro'] { color: var(--color-ink-faint); }
+.selo[data-faixa='sem-dados'] { color: var(--color-ink-faint); border-style: dashed; }
+.selo[data-faixa='critico'] { color: var(--color-negative); }
+.selo[data-faixa='atencao'] { color: var(--color-attention); }
+.selo[data-faixa='bom'] { color: var(--color-positive); }
+
+/* -------------------------------------------------------- barra de acerto -- */
+
+.barra-desempenho {
+  position: relative;
+  block-size: 3px;
+  inline-size: 100%;
+  background-color: var(--color-paper-sunken);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.barra-desempenho__preenchimento {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  border-radius: 2px;
+  background-color: var(--color-ink-faint);
+  transition: transform var(--duration-normal) var(--ease-out-expo);
+}
+
+.barra-desempenho[data-faixa='critico'] .barra-desempenho__preenchimento { background-color: var(--color-negative); }
+.barra-desempenho[data-faixa='atencao'] .barra-desempenho__preenchimento { background-color: var(--color-attention); }
+.barra-desempenho[data-faixa='bom'] .barra-desempenho__preenchimento { background-color: var(--color-positive); }
+
+/* ------------------------------------------------------------ estados ----- */
+
+.estado-vazio {
+  padding: var(--space-lg) var(--space-md);
+  text-align: center;
+  border: 1px dashed var(--color-rule);
+  border-radius: var(--radius-md);
+  background-color: var(--color-paper-raised);
+}
+
+.estado-vazio__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lead);
+}
+
+.estado-vazio__descricao {
+  margin: var(--space-2xs) auto 0;
+  max-inline-size: 46ch;
+  font-size: var(--text-small);
+  color: var(--color-ink-soft);
+}
+
+.carregando {
+  display: grid;
+  gap: var(--space-xs);
+  padding-block: var(--space-xs);
+}
+
+.carregando__linha {
+  block-size: 1.15rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--color-paper-sunken) 0%,
+    var(--color-paper-raised) 50%,
+    var(--color-paper-sunken) 100%
+  );
+  background-size: 200% 100%;
+  animation: pulsar 1.4s var(--ease-out-expo) infinite;
+}
+
+.carregando__linha:nth-child(2) { inline-size: 88%; }
+.carregando__linha:nth-child(3) { inline-size: 64%; }
+
+@keyframes pulsar {
+  to { background-position: -200% 0; }
+}
