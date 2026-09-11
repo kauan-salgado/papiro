@@ -14,6 +14,7 @@ vi.mock('../../lib/api.js', async (importarOriginal) => {
 const EDITAL = {
   cargo: { id: 7, nome: 'Perfil 5' },
   concurso: { id: 1, nome: 'Concurso Alfa', banca: 'Banca Alfa', dataProva: null },
+  totais: null,
   disciplinas: [
     {
       disciplinaId: 16,

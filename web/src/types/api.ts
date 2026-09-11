@@ -63,9 +63,22 @@ export type DisciplinaDoEdital = DesempenhoDisciplina & {
   readonly topicos: readonly DesempenhoTopico[];
 };
 
+export type TotaisDoCargo = {
+  readonly totalSessoes: number;
+  readonly totalMinutos: number;
+  readonly acertos: number;
+  readonly erros: number;
+  readonly brancos: number;
+  readonly sessoesGerais: number;
+  readonly minutosGerais: number;
+  readonly percentualAcerto: number | null;
+};
+
 export type Edital = {
   readonly cargo: { readonly id: number; readonly nome: string };
   readonly concurso: Concurso;
+  /** Do edital inteiro, simulados inclusive. Null quando nada foi registrado. */
+  readonly totais: TotaisDoCargo | null;
   readonly disciplinas: readonly DisciplinaDoEdital[];
 };
 
@@ -89,6 +102,8 @@ export type Sessao = {
     readonly codigoEdital: string | null;
     readonly descricao: string;
   } | null;
+  /** Preenchido quando a sessão pertence a uma matéria (item ou bateria avulsa). */
+  readonly disciplina: { readonly id: number; readonly nome: string } | null;
 };
 
 export type Simulado = {

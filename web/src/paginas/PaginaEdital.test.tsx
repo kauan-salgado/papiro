@@ -16,6 +16,16 @@ vi.mock('../lib/api.js', async (importarOriginal) => {
 const EDITAL: Edital = {
   cargo: { id: 7, nome: 'Área de Computação' },
   concurso: { id: 1, nome: 'Concurso Alfa', banca: 'Banca Alfa', dataProva: null },
+  totais: {
+    totalSessoes: 2,
+    totalMinutos: 120,
+    acertos: 8,
+    erros: 2,
+    brancos: 0,
+    sessoesGerais: 0,
+    minutosGerais: 0,
+    percentualAcerto: 80,
+  },
   disciplinas: [
     {
       disciplinaId: 16,

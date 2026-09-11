@@ -48,7 +48,9 @@ export function PaginaEdital() {
 
   const topicos = edital.disciplinas.flatMap((disciplina) => disciplina.topicos);
   const estudados = topicos.filter((topico) => topico.totalSessoes > 0).length;
-  const minutos = edital.disciplinas.reduce((soma, d) => soma + d.totalMinutos, 0);
+  // Do cargo, e não a soma das disciplinas: simulados não pertencem a matéria
+  // alguma e ficariam de fora, deixando o resumo menor que o histórico.
+  const minutos = edital.totais?.totalMinutos ?? 0;
   const cobertura = topicos.length > 0 ? Math.round((100 * estudados) / topicos.length) : 0;
 
   return (
@@ -63,6 +65,11 @@ export function PaginaEdital() {
         </p>
         <p className="resumo-edital__item">
           <strong>{formatarDuracao(minutos)}</strong> investidas
+          {(edital.totais?.minutosGerais ?? 0) > 0 && (
+            <span className="resumo-edital__nota">
+              {formatarDuracao(edital.totais?.minutosGerais ?? 0)} em simulados
+            </span>
+          )}
         </p>
         <p className="resumo-edital__dica">
           {ehVisitante

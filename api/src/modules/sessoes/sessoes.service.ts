@@ -33,6 +33,7 @@ const SELECAO_PADRAO = {
   // De onde veio a sessao, quando veio de um item do edital: o historico da
   // disciplina mistura os dois niveis e precisa dizer qual e qual.
   topico: { select: { id: true, codigoEdital: true, descricao: true } },
+  disciplina: { select: { id: true, nome: true } },
 } as const;
 
 /**
@@ -189,10 +190,16 @@ export async function listarSessoesDaDisciplina(disciplinaId: number, usuarioId:
   return sessoes.map(paraDTO);
 }
 
-/** Historico do cargo: simulados e estudo que nao pertence a disciplina alguma. */
+/**
+ * Historico do edital inteiro: simulados, baterias de materia e estudo de item.
+ *
+ * Mesma regra do painel da disciplina — o historico mostra tudo que a estatistica
+ * do nivel soma. Cada linha diz de onde veio (item ou materia), senao a lista
+ * viraria um amontoado sem contexto.
+ */
 export async function listarSessoesDoCargo(cargoId: number, usuarioId: number) {
   const sessoes = await prisma.sessaoEstudo.findMany({
-    where: { cargoId, disciplinaId: null, ...filtroSessao(usuarioId) },
+    where: { cargoId, ...filtroSessao(usuarioId) },
     orderBy: [{ data: 'desc' }, { id: 'desc' }],
     select: SELECAO_PADRAO,
   });

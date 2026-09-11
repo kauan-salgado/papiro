@@ -30,6 +30,7 @@ function sessao(parcial: Partial<Sessao> = {}): Sessao {
     observacoes: null,
     simulado: null,
     topico: null,
+    disciplina: null,
     ...parcial,
   };
 }
@@ -112,6 +113,20 @@ describe('HistoricoSessoes', () => {
     // A que veio de um item mostra o código; a avulsa não mostra nada.
     expect(await screen.findByText('2.1')).toBeInTheDocument();
     expect(screen.getAllByText('2.1')).toHaveLength(1);
+  });
+
+  test('no histórico do edital, cada linha diz de que nível veio', async () => {
+    vi.mocked(api.get).mockResolvedValue([
+      sessao({ id: 1, topico: { id: 3, codigoEdital: '2.1', descricao: 'Criptografia.' }, disciplina: { id: 5, nome: 'Segurança' } }),
+      sessao({ id: 2, topicoId: null, disciplina: { id: 5, nome: 'Segurança' } }),
+      sessao({ id: 3, topicoId: null, disciplinaId: null }),
+    ]);
+
+    renderComProvedores(<HistoricoSessoes alvo={{ tipo: 'cargo', id: CARGO_ID }} cargoId={CARGO_ID} />);
+
+    expect(await screen.findByText('2.1')).toBeInTheDocument();   // item do edital
+    expect(screen.getByText('Segurança')).toBeInTheDocument();     // bateria da matéria
+    expect(screen.getByText('geral')).toBeInTheDocument();         // simulado
   });
 
   test('no histórico do próprio tópico, não repete o código a cada linha', async () => {

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { prisma } from '../../lib/prisma.js';
 import {
+  linhaDesempenhoCargoSchema,
   linhaDesempenhoDisciplinaSchema,
   linhaDesempenhoTopicoSchema,
 } from './dashboard.schema.js';
@@ -104,4 +105,31 @@ export async function desempenhoDosTopicosDoCargo(usuarioId: number, cargoId: nu
   );
 
   return z.array(linhaDesempenhoTopicoSchema).parse(linhas);
+}
+
+/**
+ * Total do edital inteiro, incluindo o que nao pertence a materia alguma.
+ *
+ * Somar as disciplinas deixaria os simulados de fora — e o resumo no topo da
+ * tela mostraria menos horas do que o historico do proprio edital lista.
+ */
+export async function desempenhoDoCargo(usuarioId: number, cargoId: number) {
+  const linhas = await prisma.$queryRawUnsafe(
+    `SELECT cargo_id::int          AS "cargoId",
+            cargo                  AS "cargo",
+            total_sessoes::int     AS "totalSessoes",
+            total_minutos::int     AS "totalMinutos",
+            acertos::int           AS "acertos",
+            erros::int             AS "erros",
+            brancos::int           AS "brancos",
+            sessoes_gerais::int    AS "sessoesGerais",
+            minutos_gerais::int    AS "minutosGerais",
+            percentual_acerto::float AS "percentualAcerto"
+     FROM vw_desempenho_cargo
+     WHERE usuario_id = $1::int AND cargo_id = $2::int`,
+    usuarioId,
+    cargoId,
+  );
+
+  return z.array(linhaDesempenhoCargoSchema).parse(linhas)[0] ?? null;
 }

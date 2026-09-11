@@ -156,11 +156,27 @@ describe('registro no cargo (simulado)', () => {
     expect(linha.totalMinutos).toBe(100); // continua 100, sem os 240 do simulado
   });
 
-  test('aparece no histórico do cargo', async () => {
+  test('o histórico do cargo traz os três níveis, cada um com sua origem', async () => {
     const historico = await eu.get(`/api/cargos/${cargoId}/sessoes`).expect(200);
 
-    expect(historico.body.data).toHaveLength(1);
-    expect(historico.body.data[0].tempoMinutos).toBe(240);
+    expect(historico.body.data).toHaveLength(3); // simulado + bateria + item
+
+    const simulado = historico.body.data.find(
+      (s: { disciplinaId: number | null }) => s.disciplinaId === null,
+    );
+    const bateria = historico.body.data.find(
+      (s: { disciplinaId: number | null; topicoId: number | null }) =>
+        s.disciplinaId !== null && s.topicoId === null,
+    );
+    const doItem = historico.body.data.find(
+      (s: { topicoId: number | null }) => s.topicoId !== null,
+    );
+
+    expect(simulado.tempoMinutos).toBe(240);
+    expect(simulado.disciplina).toBeNull();
+    expect(bateria.disciplina.nome).toBe('Segurança');
+    expect(bateria.topico).toBeNull();
+    expect(doItem.topico.codigoEdital).toBe('1.1');
   });
 });
 

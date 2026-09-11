@@ -13,6 +13,33 @@ type Props = {
   readonly textoVazio?: string;
 };
 
+/** Etiqueta curta: o código do item, o nome da matéria, ou "geral". */
+function origemCurta(sessao: Sessao, nivel: 'disciplina' | 'cargo'): string {
+  if (sessao.topico) {
+    return sessao.topico.codigoEdital ?? 'item';
+  }
+
+  if (sessao.disciplina) {
+    // No painel da matéria, dizer o nome dela em toda linha seria redundante.
+    return nivel === 'cargo' ? sessao.disciplina.nome : 'avulsa';
+  }
+
+  return 'geral';
+}
+
+/** Texto completo no title: o item inteiro não cabe na etiqueta. */
+function origemDetalhada(sessao: Sessao): string {
+  if (sessao.topico) {
+    return `${sessao.topico.codigoEdital ?? ''} ${sessao.topico.descricao}`.trim();
+  }
+
+  if (sessao.disciplina) {
+    return `Estudo avulso de ${sessao.disciplina.nome}`;
+  }
+
+  return 'Simulado ou estudo geral do edital';
+}
+
 function resultado(sessao: Sessao): string | null {
   if (sessao.tipoEstudo !== 'Questoes' || sessao.questoesAcertadas === null) {
     return null;
@@ -60,11 +87,12 @@ export function HistoricoSessoes({ alvo, cargoId, textoVazio }: Props) {
 
             <span className="historico__resultado">{resultado(sessao) ?? ''}</span>
 
-            {/* De qual item veio — só faz sentido no histórico da matéria,
-                onde os dois níveis aparecem lado a lado. */}
-            {alvo.tipo !== 'topico' && sessao.topico && (
-              <span className="historico__origem" title={sessao.topico.descricao}>
-                {sessao.topico.codigoEdital ?? 'item'}
+            {/* De onde a sessão veio. Só aparece onde níveis diferentes
+                convivem: no histórico do próprio tópico seria a mesma etiqueta
+                repetida em toda linha. */}
+            {alvo.tipo !== 'topico' && (
+              <span className="historico__origem" title={origemDetalhada(sessao)}>
+                {origemCurta(sessao, alvo.tipo)}
               </span>
             )}
 

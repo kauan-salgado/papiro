@@ -2,6 +2,7 @@ import { NaoEncontradoError } from '../../http/erros.js';
 import { filtroCargo } from '../../http/posse.js';
 import { prisma } from '../../lib/prisma.js';
 import {
+  desempenhoDoCargo,
   desempenhoDosTopicosDoCargo,
   desempenhoPorDisciplina,
 } from '../dashboard/dashboard.service.js';
@@ -23,9 +24,10 @@ export async function montarEditalVerticalizado(cargoId: number, usuarioId: numb
     throw new NaoEncontradoError('Cargo', cargoId);
   }
 
-  const [disciplinas, topicos] = await Promise.all([
+  const [disciplinas, topicos, totais] = await Promise.all([
     desempenhoPorDisciplina(usuarioId, cargoId),
     desempenhoDosTopicosDoCargo(usuarioId, cargoId),
+    desempenhoDoCargo(usuarioId, cargoId),
   ]);
 
   const topicosPorDisciplina = topicos.reduce((mapa, topico) => {
@@ -36,6 +38,8 @@ export async function montarEditalVerticalizado(cargoId: number, usuarioId: numb
   return {
     cargo: { id: cargo.id, nome: cargo.nome },
     concurso: cargo.concurso,
+    /** Inclui simulados; somar as disciplinas os deixaria de fora. */
+    totais,
     // Ordem do edital, nao do desempenho: esta tela e para ler o edital.
     disciplinas: [...disciplinas]
       .sort((a, b) => a.disciplina.localeCompare(b.disciplina, 'pt-BR'))

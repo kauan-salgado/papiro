@@ -39,3 +39,19 @@ export const linhaDesempenhoTopicoSchema = z.object({
 
 export type DesempenhoDisciplina = z.infer<typeof linhaDesempenhoDisciplinaSchema>;
 export type DesempenhoTopico = z.infer<typeof linhaDesempenhoTopicoSchema>;
+
+export const linhaDesempenhoCargoSchema = z.object({
+  cargoId: z.number().int(),
+  cargo: z.string(),
+  totalSessoes: z.number().int(),
+  totalMinutos: z.number().int(),
+  acertos: z.number().int(),
+  erros: z.number().int(),
+  brancos: z.number().int(),
+  /** Simulados e estudo geral: o que não pertence a matéria alguma. */
+  sessoesGerais: z.number().int(),
+  minutosGerais: z.number().int(),
+  percentualAcerto: z.number().nullable(),
+});
+
+export type DesempenhoCargo = z.infer<typeof linhaDesempenhoCargoSchema>;
