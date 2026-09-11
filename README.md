@@ -2,7 +2,7 @@
 
 [![verificar](https://github.com/kauan-salgado/papiro/actions/workflows/verificar.yml/badge.svg)](https://github.com/kauan-salgado/papiro/actions/workflows/verificar.yml)
 
-**[Ver rodando →](https://papiro-web-omega.vercel.app)** · [API](https://papiro-api.vercel.app/api/health)
+**[Ver rodando →](https://papiro-concursos.vercel.app)** · [API](https://papiro-api.vercel.app/api/health)
 
 **Gerenciador de edital verticalizado e metricas de estudo** para quem estuda
 para varios concursos de TI ao mesmo tempo.
@@ -28,7 +28,7 @@ pelo Postgres, nao apenas pelo formulario.
 | **Testes** | 176 no total: 55 na API (contra Postgres real) e 121 no front |
 | **Cobertura** | API 88,9% de linhas · front 94,7% — limites fixados no `vitest.config.ts` |
 | **Acessibilidade** | 0 falha de contraste WCAG AA nas duas telas, medida sobre os elementos renderizados |
-| **No ar** | [papiro-web-omega.vercel.app](https://papiro-web-omega.vercel.app) — Vercel (front + API serverless, mesma origem) + Neon em Sao Paulo |
+| **No ar** | [papiro-concursos.vercel.app](https://papiro-concursos.vercel.app) — Vercel (front + API serverless, mesma origem) + Neon em Sao Paulo |
 
 ---
 

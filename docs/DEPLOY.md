@@ -1,6 +1,6 @@
 # Publicar o Papiro na Vercel + Neon
 
-> **Ja publicado**: [papiro-web-omega.vercel.app](https://papiro-web-omega.vercel.app)
+> **Ja publicado**: [papiro-concursos.vercel.app](https://papiro-concursos.vercel.app)
 > · API em [papiro-api.vercel.app](https://papiro-api.vercel.app/api/health)
 > · banco no Neon (Sao Paulo, PostgreSQL 16.15).
 >
