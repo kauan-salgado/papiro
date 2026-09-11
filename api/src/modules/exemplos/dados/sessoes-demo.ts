@@ -1,4 +1,4 @@
-import { TipoEstudo } from '../../src/generated/prisma/enums.js';
+import { TipoEstudo } from '../../../generated/prisma/enums.js';
 
 export type SessaoDemo = {
   readonly topicoId: number;

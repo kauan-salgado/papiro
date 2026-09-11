@@ -136,6 +136,15 @@
   font-size: var(--text-lead);
 }
 
+.estado-vazio__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-block-start: var(--space-md);
+}
+
 .estado-vazio__descricao {
   margin: var(--space-2xs) auto 0;
   max-inline-size: 46ch;

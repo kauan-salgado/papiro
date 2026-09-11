@@ -1,11 +1,14 @@
 import { Link } from 'react-router-dom';
 import { useCargos } from '../hooks/useEdital.js';
+import { useCarregarExemplos } from '../hooks/useExemplos.js';
+import { Botao } from '../components/ui/Botao.js';
 import { Carregando } from '../components/ui/Carregando.js';
 import { EstadoVazio } from '../components/ui/EstadoVazio.js';
 import './paginas.css';
 
 export function PaginaInicial() {
   const { data: cargos, isPending, isError } = useCargos();
+  const exemplos = useCarregarExemplos();
 
   if (isPending) {
     return <Carregando linhas={4} rotulo="Carregando editais" />;
@@ -23,12 +26,21 @@ export function PaginaInicial() {
   if (cargos.length === 0) {
     return (
       <EstadoVazio
-        titulo="Nenhum edital cadastrado"
-        descricao="Cadastre o concurso e cole o texto do edital — o reconhecimento monta a lista de tópicos para você conferir."
+        titulo="Sua conta está vazia"
+        descricao="Cadastre um edital e cole o texto do PDF, ou carregue dois editais de exemplo com histórico de estudo para ver como o Papiro funciona."
         acao={
-          <Link to="/novo" className="cartao__acao">
-            Cadastrar o primeiro edital
-          </Link>
+          <div className="estado-vazio__acoes">
+            <Botao
+              type="button"
+              onClick={() => exemplos.mutate()}
+              disabled={exemplos.isPending}
+            >
+              {exemplos.isPending ? 'Carregando…' : 'Carregar editais de exemplo'}
+            </Botao>
+            <Link to="/novo" className="cartao__acao cartao__acao--sutil">
+              Cadastrar o meu edital
+            </Link>
+          </div>
         }
       />
     );

@@ -1,4 +1,5 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { api } from '../lib/api.js';
 import { renderComProvedores } from '../test/utils.js';
@@ -58,17 +59,37 @@ describe('PaginaInicial', () => {
     expect(await screen.findByText('banca não informada')).toBeInTheDocument();
   });
 
-  test('banco sem editais oferece a tela de cadastro, e nao o terminal', async () => {
+  test('conta vazia oferece os dois caminhos: exemplo e edital proprio', async () => {
     // Antes esta tela mandava rodar `npm run seed` no terminal — o app pedindo
-    // que o usuario saisse do app. Agora o caminho vazio leva ao cadastro.
+    // que o usuario saisse do app.
     vi.mocked(api.get).mockResolvedValue([]);
     renderComProvedores(<PaginaInicial />);
 
-    expect(await screen.findByText('Nenhum edital cadastrado')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Cadastrar o primeiro edital' })).toHaveAttribute(
+    expect(await screen.findByText('Sua conta está vazia')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Carregar editais de exemplo' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Cadastrar o meu edital' })).toHaveAttribute(
       'href',
       '/novo',
     );
+  });
+
+  test('o botao de exemplos chama a rota e recarrega a lista', async () => {
+    const usuario = userEvent.setup();
+    vi.mocked(api.get).mockResolvedValue([]);
+    vi.mocked(api.post).mockResolvedValue({
+      concursosCriados: 2,
+      topicosCriados: 70,
+      sessoesCriadas: 120,
+      jaExistiam: 0,
+    });
+
+    renderComProvedores(<PaginaInicial />);
+
+    await usuario.click(await screen.findByRole('button', { name: 'Carregar editais de exemplo' }));
+
+    await waitFor(() => expect(api.post).toHaveBeenCalledWith('/exemplos', {}));
   });
 
   test('oferece cadastrar um edital novo mesmo com a lista cheia', async () => {

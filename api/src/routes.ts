@@ -6,6 +6,7 @@ import { authRoutes } from './modules/auth/auth.routes.js';
 import { cargosRoutes } from './modules/cargos/cargos.routes.js';
 import { concursosRoutes } from './modules/concursos/concursos.routes.js';
 import { dashboardRoutes } from './modules/dashboard/dashboard.routes.js';
+import { exemplosRoutes } from './modules/exemplos/exemplos.routes.js';
 import { disciplinasRoutes } from './modules/disciplinas/disciplinas.routes.js';
 import { sessoesRoutes } from './modules/sessoes/sessoes.routes.js';
 import { simuladosRoutes } from './modules/simulados/simulados.routes.js';
@@ -41,6 +42,7 @@ export function criarRotas({ modoDemo = env.MODO_DEMO }: { modoDemo?: boolean } 
   routes.use('/simulados', simuladosRoutes);
   routes.use('/sessoes', sessoesRoutes);
   routes.use('/dashboard', dashboardRoutes);
+  routes.use('/exemplos', exemplosRoutes);
 
   return routes;
 }

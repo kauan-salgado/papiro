@@ -1,10 +1,10 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { editalAnalistaSeguranca } from './data/edital-analista-seguranca.js';
-import { editalPeritoComputacao } from './data/edital-perito-computacao.js';
-import { gerarSessoesDemo } from './data/sessoes-demo.js';
-import type { EditalSeed, ItemEdital } from './data/tipos.js';
+import { editalAnalistaSeguranca } from '../src/modules/exemplos/dados/edital-analista-seguranca.js';
+import { editalPeritoComputacao } from '../src/modules/exemplos/dados/edital-perito-computacao.js';
+import { gerarSessoesDemo } from '../src/modules/exemplos/dados/sessoes-demo.js';
+import type { EditalSeed, ItemEdital } from '../src/modules/exemplos/dados/tipos.js';
 
 // ---------------------------------------------------------------------------
 // Importacao em lote de editais.

@@ -30,7 +30,7 @@ pelo Postgres, nao apenas pelo formulario.
 | --- | --- |
 | **Ideia central** | Todo agregado e `SUM` sobre uma fact table. Nenhum contador mutavel. |
 | **Regras de negocio** | `CHECK constraint` no Postgres, Zod na API, Zod no formulario — nessa ordem de autoridade |
-| **Testes** | 176 no total: 55 na API (contra Postgres real) e 121 no front |
+| **Testes** | 219 no total: 88 na API (contra Postgres real) e 131 no front |
 | **Cobertura** | API 88,9% de linhas · front 94,7% — limites fixados no `vitest.config.ts` |
 | **Acessibilidade** | 0 falha de contraste WCAG AA nas duas telas, medida sobre os elementos renderizados |
 | **No ar** | [papiro-concursos.vercel.app](https://papiro-concursos.vercel.app) — Vercel (front + API serverless, mesma origem) + Neon em Sao Paulo |
@@ -317,6 +317,48 @@ sempre.
 
 ---
 
+## Contas
+
+Sessao de estudo e dado pessoal: cada pessoa ve apenas os proprios editais e as
+proprias horas. A entrada e pelo **GitHub** — o projeto nao guarda senha de
+ninguem, e por isso nao tem como vazar uma.
+
+### Onde mora a autorizacao
+
+Toda a hierarquia pende de `concursos.usuario_id`. Autorizar e sempre a mesma
+travessia: alcancar a raiz e comparar o dono. Por isso ela e escrita **uma vez**,
+em `api/src/http/posse.ts`, e nao repetida em cada rota — espalhada por vinte
+consultas, bastaria esquecer uma para abrir um IDOR, o bug em que trocar o id na
+URL mostra o dado de outra pessoa.
+
+Duas decisoes que nao sao detalhe:
+
+- **Registro alheio responde 404, nao 403.** "Existe, mas nao e seu" ja e
+  informacao que nao pertence a quem perguntou.
+- **Sessao no banco, nao JWT.** JWT nao se invalida; "sair" que nao invalida
+  nada nao e sair. O cookie e `httpOnly` e `SameSite=lax`, e o fluxo OAuth leva
+  um `state` proprio contra CSRF.
+
+E uma unica linha em `routes.ts` fecha tudo abaixo de `/api`: rota nova nasce
+protegida, em vez de depender de alguem lembrar do middleware.
+
+### O teste que justifica a feature
+
+`api/src/modules/isolamento.routes.test.ts` cria duas pessoas e faz uma tentar
+ler, alterar e apagar **cada** recurso da outra — concurso, cargo, disciplina,
+topico, simulado, sessao, edital, dashboard e importacao. Ao final, verifica que
+os dados da primeira continuam intactos. Sao 28 testes so disso.
+
+### Conta nova
+
+Quem entra pela primeira vez chega numa conta vazia, e tela vazia nao mostra o
+que o projeto faz. O botao **"Carregar editais de exemplo"** copia os dois
+editais ficticios com historico de estudo para a conta de quem clicou —
+idempotente, entao clicar duas vezes nao duplica nada.
+
+
+---
+
 ## Como o edital entra
 
 ![Tela de importação: texto colado à esquerda, prévia editável abaixo](docs/importar-edital.jpeg)
@@ -545,11 +587,12 @@ Um projeto de portfolio honesto declara o que **nao** fez:
   corrido, uma linha por item, frase quebrada por PDF), e nao um padrao formal —
   banca com numeracao romana ou com itens em tabela vai exigir correcao na
   previa. A previa editavel existe justamente porque isso vai acontecer.
-- **Sem autenticacao.** O projeto assume um unico usuario na propria maquina.
-  Colocar isso em rede exigiria `usuario_id` na hierarquia, sessao e
-  autorizacao por linha — mudanca de modelo, nao de tela. Para a vitrine
-  publica existe o `MODO_DEMO`, que recusa as acoes destrutivas com 403; e um
-  limitador de dano, nao um substituto de login.
+- **Sem "sair de todos os dispositivos" nem administracao de contas.** A sessao
+  expira em 30 dias e pode ser encerrada, mas nao ha tela para revogar as
+  outras sessoes nem para apagar a propria conta.
+- **O `MODO_DEMO` continua existindo** para o ambiente publico, mas virou
+  cinto de seguranca secundario: com contas, um visitante so alcanca os
+  proprios dados de qualquer forma.
 - **Sem paginacao.** Um edital tem dezenas de itens e um historico tem dezenas
   de sessoes; `LIMIT` viraria necessario na casa dos milhares.
 - **`npm audit` acusa vulnerabilidades na CLI do Prisma** (`mysql2`,
