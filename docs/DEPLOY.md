@@ -1,5 +1,11 @@
 # Publicar o Papiro na Vercel + Neon
 
+> **Ja publicado**: [papiro-web-omega.vercel.app](https://papiro-web-omega.vercel.app)
+> · API em [papiro-api.vercel.app](https://papiro-api.vercel.app/api/health)
+> · banco no Neon (Sao Paulo, PostgreSQL 16.15).
+>
+> O que segue e o roteiro para repetir o processo — do zero ou em outra conta.
+
 Arquitetura do ambiente hospedado:
 
 ```text
@@ -55,6 +61,28 @@ Importe o repositorio na Vercel e configure:
 | Root Directory | `api` |
 | Build Command | (ja vem do `api/vercel.json`) |
 | Regiao da funcao | `gru1` — ja fixada no `api/vercel.json` |
+
+Pelo terminal, sem passar credencial por formulario:
+
+```bash
+cd api
+npx vercel link --yes --project papiro-api
+
+# le do .env.neon e envia sem imprimir na tela
+for VAR in DATABASE_URL DIRECT_DATABASE_URL; do
+  grep "^${VAR}=" .env.neon | cut -d= -f2- | tr -d '"' \
+    | npx vercel env add "$VAR" production --force
+done
+printf 'true'       | npx vercel env add MODO_DEMO production --force
+printf 'production' | npx vercel env add NODE_ENV production --force
+
+npx vercel deploy --prod --yes
+```
+
+**Por que existe um `public/index.html` na API**: a Vercel exige um diretorio de
+saida mesmo em projeto que so tem funcoes — sem ele o deploy falha com
+*"No Output Directory named public"*. Em vez de uma pasta vazia, ali mora uma
+pagina que explica o que e aquele dominio e aponta para `/api/health`.
 
 Variaveis de ambiente:
 

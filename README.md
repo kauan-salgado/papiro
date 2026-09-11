@@ -2,6 +2,8 @@
 
 [![verificar](https://github.com/kauan-salgado/papiro/actions/workflows/verificar.yml/badge.svg)](https://github.com/kauan-salgado/papiro/actions/workflows/verificar.yml)
 
+**[Ver rodando →](https://papiro-web-omega.vercel.app)** · [API](https://papiro-api.vercel.app/api/health)
+
 **Gerenciador de edital verticalizado e metricas de estudo** para quem estuda
 para varios concursos de TI ao mesmo tempo.
 
@@ -26,7 +28,7 @@ pelo Postgres, nao apenas pelo formulario.
 | **Testes** | 176 no total: 55 na API (contra Postgres real) e 121 no front |
 | **Cobertura** | API 88,9% de linhas · front 94,7% — limites fixados no `vitest.config.ts` |
 | **Acessibilidade** | 0 falha de contraste WCAG AA nas duas telas, medida sobre os elementos renderizados |
-| **Deploy** | Vercel (front + API serverless na mesma origem) + Neon — ver [docs/DEPLOY.md](docs/DEPLOY.md) |
+| **No ar** | [papiro-web-omega.vercel.app](https://papiro-web-omega.vercel.app) — Vercel (front + API serverless, mesma origem) + Neon em Sao Paulo |
 
 ---
 
@@ -549,11 +551,14 @@ Um projeto de portfolio honesto declara o que **nao** fez:
   `deepmerge-ts`), dependencias de desenvolvimento que nao entram no runtime —
   a API fala Postgres pelo `@prisma/adapter-pg`. Corrigir com `audit fix --force`
   faria downgrade da CLI.
-- **Deploy configurado, ainda nao executado.** `docs/DEPLOY.md` traz a
-  configuracao completa para Vercel + Neon, e os arquivos (`vercel.json` dos
-  dois projetos, entrypoint serverless, modo demonstracao) estao no repositorio
-  com testes. Mas a primeira publicacao depende de contas que so o dono cria, e
-  ninguem viu esse desenho rodar hospedado — pode exigir ajuste.
+- **O deploy e manual.** Os projetos da Vercel foram criados pela CLI, entao
+  publicar e `vercel deploy --prod` em `api/` e em `web/`. Conectar o
+  repositorio do GitHub pelo painel da Vercel daria deploy automatico a cada
+  push — as variaveis de ambiente ja estao configuradas nos projetos, entao
+  seria so ligar.
+- **O ambiente publico roda com `MODO_DEMO=true`.** As acoes que apagam edital
+  respondem 403 la, e nao aqui. Se algo parecer quebrado na demonstracao, e
+  quase sempre isso.
 
 ### Proximos passos naturais
 

@@ -30,3 +30,6 @@ coverage/
 
 # Prisma Client gerado (regenerado por `npm run prisma:generate`)
 api/src/generated/
+
+# Credenciais do banco hospedado (Neon) — nunca versionadas
+.env.neon
