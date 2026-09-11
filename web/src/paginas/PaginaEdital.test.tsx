@@ -14,17 +14,17 @@ vi.mock('../lib/api.js', async (importarOriginal) => {
 });
 
 const EDITAL: Edital = {
-  cargo: { id: 7, nome: 'Área 3' },
-  concurso: { id: 1, nome: 'Polícia Federal', banca: 'CEBRASPE', dataProva: null },
+  cargo: { id: 7, nome: 'Área de Computação' },
+  concurso: { id: 1, nome: 'Concurso Alfa', banca: 'Banca Alfa', dataProva: null },
   disciplinas: [
     {
       disciplinaId: 16,
       disciplina: 'Algoritmos',
       peso: 1,
       cargoId: 7,
-      cargo: 'Área 3',
+      cargo: 'Área de Computação',
       concursoId: 1,
-      concurso: 'Polícia Federal',
+      concurso: 'Concurso Alfa',
       totalSessoes: 2,
       totalMinutos: 120,
       acertos: 8,
@@ -69,9 +69,9 @@ const EDITAL: Edital = {
       disciplina: 'Redes',
       peso: 2,
       cargoId: 7,
-      cargo: 'Área 3',
+      cargo: 'Área de Computação',
       concursoId: 1,
-      concurso: 'Polícia Federal',
+      concurso: 'Concurso Alfa',
       totalSessoes: 0,
       totalMinutos: 0,
       acertos: 0,

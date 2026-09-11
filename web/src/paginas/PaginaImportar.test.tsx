@@ -19,7 +19,7 @@ REDES
 
 const EDITAL_VAZIO = {
   cargo: { id: 37, nome: 'Analista' },
-  concurso: { id: 9, nome: 'TJ', banca: 'FGV', dataProva: null },
+  concurso: { id: 9, nome: 'Concurso Alfa', banca: 'Banca Alfa', dataProva: null },
   disciplinas: [],
 };
 

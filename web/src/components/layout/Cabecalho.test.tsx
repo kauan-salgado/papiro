@@ -16,15 +16,15 @@ const CARGOS: Cargo[] = [
   {
     id: 7,
     concursoId: 1,
-    nome: 'Área 3',
-    concurso: { id: 1, nome: 'Polícia Federal', banca: 'CEBRASPE' },
+    nome: 'Área de Computação',
+    concurso: { id: 1, nome: 'Concurso Alfa', banca: 'Banca Alfa' },
     _count: { disciplinas: 8, simulados: 1 },
   },
   {
     id: 8,
     concursoId: 2,
-    nome: 'Perfil 5',
-    concurso: { id: 2, nome: 'DATAPREV', banca: 'Quadrix' },
+    nome: 'Perfil de Segurança',
+    concurso: { id: 2, nome: 'Concurso Beta', banca: 'Banca Beta' },
     _count: { disciplinas: 6, simulados: 0 },
   },
 ];
@@ -63,14 +63,14 @@ describe('Cabecalho', () => {
   test('dentro de um cargo, mostra concurso, banca e as abas', async () => {
     renderizar('/cargos/7/edital');
 
-    const titulo = await screen.findByRole('heading', { name: 'Área 3', level: 1 });
+    const titulo = await screen.findByRole('heading', { name: 'Área de Computação', level: 1 });
 
-    // Escopo no bloco de contexto: "Polícia Federal" tambem aparece como opcao
+    // Escopo no bloco de contexto: "Concurso Alfa" tambem aparece como opcao
     // do seletor de editais, e a busca solta encontraria as duas.
     const contexto = titulo.closest('.cabecalho-app__contexto');
 
-    expect(contexto).toHaveTextContent('Polícia Federal');
-    expect(contexto).toHaveTextContent('CEBRASPE');
+    expect(contexto).toHaveTextContent('Concurso Alfa');
+    expect(contexto).toHaveTextContent('Banca Alfa');
     expect(screen.getByRole('link', { name: 'Edital verticalizado' })).toBeInTheDocument();
   });
 

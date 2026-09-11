@@ -1,23 +1,23 @@
 import type { EditalSeed } from './tipos.js';
 
 /**
- * DADOS DE EXEMPLO — aproximacao de um edital real, escrita para exercitar o
- * modelo enquanto a lista definitiva nao entra. Substitua `itens` pelos itens
- * literais do edital publicado, mantendo o formato
- * [disciplina, codigoEdital, descricao].
+ * DADOS DE EXEMPLO — edital ficticio, escrito para exercitar o modelo. Nenhum
+ * orgao ou banca real e citado, e os itens nao sao transcricao de edital
+ * publicado. Para usar um edital de verdade, substitua `itens` mantendo o
+ * formato [disciplina, codigoEdital, descricao], ou use a tela de importacao.
  *
  * Repare que "Deteccao de intrusao (IDS/IPS) e correlacao de eventos (SIEM)"
- * aparece aqui com o codigo 7.5 e no edital da DATAPREV com outro codigo e
- * outra redacao. Sao dois registros distintos de proposito: mesmo assunto,
- * editais diferentes, bancas diferentes.
+ * aparece aqui com o codigo 7.5 e no outro edital de exemplo com codigo e
+ * redacao diferentes. Sao dois registros distintos de proposito: mesmo
+ * assunto, editais diferentes.
  */
-export const pfPeritoArea3: EditalSeed = {
+export const editalPeritoComputacao: EditalSeed = {
   concurso: {
-    nome: 'Polícia Federal — Perito Criminal Federal (exemplo)',
-    banca: 'CEBRASPE',
+    nome: 'Concurso de Perícia Criminal — Computação (exemplo)',
+    banca: 'Banca Alfa',
     dataProva: null,
   },
-  cargo: { nome: 'Área 3 — Computação / Tecnologia da Informação' },
+  cargo: { nome: 'Área de Computação e Tecnologia da Informação' },
   pesos: {
     'Segurança da Informação': 2,
     'Forense Computacional': 2,

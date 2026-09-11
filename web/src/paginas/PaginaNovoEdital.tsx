@@ -52,7 +52,7 @@ export function PaginaNovoEdital() {
             <input
               className="campo__entrada"
               value={concurso}
-              placeholder="Ex.: Polícia Federal — Perito Criminal Federal"
+              placeholder="Ex.: Concurso de Analista de TI 2027"
               onChange={(evento) => setConcurso(evento.target.value)}
             />
           </label>
@@ -64,7 +64,7 @@ export function PaginaNovoEdital() {
             <input
               className="campo__entrada"
               value={banca}
-              placeholder="CEBRASPE"
+              placeholder="Nome da banca"
               onChange={(evento) => setBanca(evento.target.value)}
             />
           </label>
@@ -76,7 +76,7 @@ export function PaginaNovoEdital() {
             <input
               className="campo__entrada"
               value={cargo}
-              placeholder="Ex.: Área 3 — Computação"
+              placeholder="Ex.: Analista de Infraestrutura"
               onChange={(evento) => setCargo(evento.target.value)}
             />
           </label>

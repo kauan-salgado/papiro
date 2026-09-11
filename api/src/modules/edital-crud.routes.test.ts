@@ -21,7 +21,7 @@ describe('ciclo de vida do edital', () => {
     // --- Concurso
     const concurso = await request(app)
       .post('/api/concursos')
-      .send({ nome: NOME_DO_CONCURSO, banca: 'CEBRASPE' })
+      .send({ nome: NOME_DO_CONCURSO, banca: 'Banca Alfa' })
       .expect(201);
     const concursoId = concurso.body.data.id;
 
@@ -29,9 +29,9 @@ describe('ciclo de vida do edital', () => {
 
     const renomeado = await request(app)
       .patch(`/api/concursos/${concursoId}`)
-      .send({ banca: 'FGV', dataProva: '2027-03-14' })
+      .send({ banca: 'Banca Beta', dataProva: '2027-03-14' })
       .expect(200);
-    expect(renomeado.body.data.banca).toBe('FGV');
+    expect(renomeado.body.data.banca).toBe('Banca Beta');
 
     // --- Cargo
     const cargo = await request(app)

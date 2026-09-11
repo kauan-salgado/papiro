@@ -26,7 +26,7 @@ const SELECAO_PADRAO = {
 /**
  * Regra que o banco nao tem como impor sozinho: simulado e sessao precisam
  * pertencer ao mesmo cargo. Sem esta checagem seria possivel pendurar uma
- * sessao do edital da PF em um simulado da DATAPREV, e o consolidado do
+ * sessao de um edital em um simulado de outro, e o consolidado do
  * simulado passaria a somar questoes de outro concurso.
  */
 async function garantirSimuladoDoMesmoCargo(

@@ -9,13 +9,13 @@ import type { EditalSeed } from './tipos.js';
  * isso Concurso e o nivel raiz do modelo: sem ele, os dois viravam um registro
  * so e o percentual de acerto de um edital contaminaria o do outro.
  */
-export const dataprevPerfil5: EditalSeed = {
+export const editalAnalistaSeguranca: EditalSeed = {
   concurso: {
-    nome: 'DATAPREV — Analista de Tecnologia da Informação (exemplo)',
-    banca: 'Quadrix',
+    nome: 'Concurso de Analista de TI — Segurança (exemplo)',
+    banca: 'Banca Beta',
     dataProva: null,
   },
-  cargo: { nome: 'Perfil 5 — Segurança da Informação' },
+  cargo: { nome: 'Perfil de Segurança da Informação' },
   pesos: {
     'Gestão de Segurança da Informação': 2,
     'Segurança de Redes': 1.5,

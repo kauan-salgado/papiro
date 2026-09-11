@@ -12,11 +12,11 @@
 **Gerenciador de edital verticalizado e metricas de estudo** para quem estuda
 para varios concursos de TI ao mesmo tempo.
 
-O problema que ele resolve: um candidato que prepara PF Perito (Area 3) e
-DATAPREV (Perfil 5) em paralelo tem dois editais, duas bancas, duas numeracoes
-e assuntos que se sobrepoem sem serem o mesmo item. Planilha resolve ate o mes
-dois; depois disso ninguem sabe mais qual topico foi estudado em qual edital,
-nem qual deles esta com o pior percentual de acerto.
+O problema que ele resolve: quem prepara dois concursos de TI em paralelo tem
+dois editais, duas bancas, duas numeracoes e assuntos que se sobrepoem sem
+serem o mesmo item. Planilha resolve ate o mes dois; depois disso ninguem sabe
+mais qual topico foi estudado em qual edital, nem qual deles esta com o pior
+percentual de acerto.
 
 Papiro modela isso como banco relacional de verdade: `Concurso -> Cargo ->
 Disciplina -> Topico -> Sessao de Estudo`, com as regras de negocio impostas
@@ -146,12 +146,12 @@ Concurso (edital + banca)
 
 Cinco decisoes de modelagem sustentam o resto do projeto:
 
-**1. Concurso e o nivel raiz, acima de Cargo.** "Seguranca da Informacao" do
-edital da PF e do edital da DATAPREV sao duas disciplinas diferentes, com
-numeracao e redacao proprias. Se o Cargo fosse a raiz, os dois editais
-colidiriam e o percentual de acerto de um contaminaria o do outro. O seed
-demonstra isso de proposito: IDS/IPS/SIEM existe nos dois editais, com codigos
-`7.5` e `3.4` e textos distintos.
+**1. Concurso e o nivel raiz, acima de Cargo.** "Seguranca da Informacao" de um
+edital e de outro sao duas disciplinas diferentes, com numeracao e redacao
+proprias. Se o Cargo fosse a raiz, os dois editais colidiriam e o percentual de
+acerto de um contaminaria o do outro. O seed demonstra isso de proposito:
+IDS/IPS/SIEM existe nos dois editais de exemplo, com codigos `7.5` e `3.4` e
+textos distintos.
 
 **2. Sessao de Estudo e fact table, nao contador.** Uma linha por sessao
 realizada, imutavel depois de gravada. Nenhuma tabela guarda "total de minutos
@@ -210,10 +210,10 @@ O seed e **idempotente**: ele remove a importacao anterior daquele concurso (o
 `ON DELETE CASCADE` limpa cargos, disciplinas, topicos e sessoes) antes de
 recriar. Rodar duas vezes nao duplica nada.
 
-> Os editais em `api/prisma/data/` sao **dados de exemplo**, aproximacoes
-> escritas para exercitar o modelo. Para usar os itens reais, basta substituir o
-> array `itens` de cada arquivo — o formato e exatamente
-> `[disciplina, codigoEdital, descricao]`.
+> Os editais em `api/prisma/data/` sao **ficticios**: nenhum orgao ou banca real
+> e citado, e os itens nao sao transcricao de edital publicado. Para usar um
+> edital de verdade, cole o texto na tela de importacao ou substitua o array
+> `itens` — o formato e `[disciplina, codigoEdital, descricao]`.
 
 
 ---
@@ -537,9 +537,9 @@ um objeto qualquer.
 
 Um projeto de portfolio honesto declara o que **nao** fez:
 
-- **Os editais do seed sao dados de exemplo.** Os itens em `api/prisma/data/`
-  sao aproximacoes escritas para exercitar o modelo, nao a transcricao literal
-  dos editais publicados. Para usar os reais, a tela de importacao resolve:
+- **Os editais do seed sao ficticios.** Os itens em `api/prisma/data/` foram
+  escritos para exercitar o modelo; nao ha orgao, banca nem edital real por
+  tras deles. Para usar um edital de verdade, a tela de importacao resolve:
   cole o texto do PDF e confira a previa.
 - **O parser e heuristico.** Ele cobre os formatos que testei (paragrafo
   corrido, uma linha por item, frase quebrada por PDF), e nao um padrao formal —

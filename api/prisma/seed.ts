@@ -1,8 +1,8 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { dataprevPerfil5 } from './data/dataprev-perfil5.js';
-import { pfPeritoArea3 } from './data/pf-perito-area3.js';
+import { editalAnalistaSeguranca } from './data/edital-analista-seguranca.js';
+import { editalPeritoComputacao } from './data/edital-perito-computacao.js';
 import { gerarSessoesDemo } from './data/sessoes-demo.js';
 import type { EditalSeed, ItemEdital } from './data/tipos.js';
 
@@ -17,7 +17,7 @@ import type { EditalSeed, ItemEdital } from './data/tipos.js';
 //   npm run seed -- --demo -> importa e ainda gera historico de estudo ficticio
 // ---------------------------------------------------------------------------
 
-const EDITAIS: readonly EditalSeed[] = [pfPeritoArea3, dataprevPerfil5];
+const EDITAIS: readonly EditalSeed[] = [editalPeritoComputacao, editalAnalistaSeguranca];
 
 const connectionString = process.env['DATABASE_URL'];
 

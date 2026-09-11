@@ -14,15 +14,15 @@ const CARGOS: Cargo[] = [
   {
     id: 7,
     concursoId: 1,
-    nome: 'Área 3 — Computação',
-    concurso: { id: 1, nome: 'Polícia Federal', banca: 'CEBRASPE' },
+    nome: 'Área de Computação',
+    concurso: { id: 1, nome: 'Concurso Alfa', banca: 'Banca Alfa' },
     _count: { disciplinas: 8, simulados: 1 },
   },
   {
     id: 8,
     concursoId: 2,
-    nome: 'Perfil 5 — Segurança',
-    concurso: { id: 2, nome: 'DATAPREV', banca: null },
+    nome: 'Perfil de Segurança',
+    concurso: { id: 2, nome: 'Concurso Beta', banca: null },
     _count: { disciplinas: 6, simulados: 0 },
   },
 ];
@@ -35,8 +35,8 @@ describe('PaginaInicial', () => {
   test('lista um cartao por edital em disputa', async () => {
     renderComProvedores(<PaginaInicial />);
 
-    expect(await screen.findByText('Polícia Federal')).toBeInTheDocument();
-    expect(screen.getByText('DATAPREV')).toBeInTheDocument();
+    expect(await screen.findByText('Concurso Alfa')).toBeInTheDocument();
+    expect(screen.getByText('Concurso Beta')).toBeInTheDocument();
     expect(screen.getByText('8 disciplinas')).toBeInTheDocument();
   });
 

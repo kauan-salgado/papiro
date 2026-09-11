@@ -35,7 +35,7 @@ function renderizar() {
 
 async function preencher(usuario: ReturnType<typeof userEvent.setup>) {
   await usuario.type(screen.getByLabelText('Concurso'), 'Tribunal de Justiça');
-  await usuario.type(screen.getByLabelText(/Banca/), 'FGV');
+  await usuario.type(screen.getByLabelText(/Banca/), 'Banca Alfa');
   await usuario.type(screen.getByLabelText('Cargo'), 'Analista de TI');
 }
 
@@ -71,7 +71,7 @@ describe('PaginaNovoEdital', () => {
 
     expect(api.post).toHaveBeenNthCalledWith(1, '/concursos', {
       nome: 'Tribunal de Justiça',
-      banca: 'FGV',
+      banca: 'Banca Alfa',
       dataProva: null,
     });
     expect(api.post).toHaveBeenNthCalledWith(2, '/cargos', {
