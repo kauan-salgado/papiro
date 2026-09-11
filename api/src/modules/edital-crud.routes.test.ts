@@ -132,3 +132,80 @@ describe('GET /api/health', () => {
     expect(resposta.body.data.banco.conectado).toBe(true);
   });
 });
+
+describe('exclusão de edital pela listagem', () => {
+  test('a listagem informa quantos tópicos e sessões cada cargo tem', async () => {
+    // É o que a confirmação de exclusão mostra: "apagar 2 tópicos e 1 sessão?"
+    const concurso = await eu
+      .post('/api/concursos')
+      .send({ nome: `__teste_crud__ totais ${Date.now()}` })
+      .expect(201);
+    const cargo = await eu
+      .post('/api/cargos')
+      .send({ concursoId: concurso.body.data.id, nome: 'Cargo com conteúdo' })
+      .expect(201);
+
+    await eu
+      .post(`/api/cargos/${cargo.body.data.id}/edital/importar`)
+      .send({
+        itens: [
+          { disciplina: 'Redes', codigoEdital: '1.1', descricao: 'Modelo OSI.' },
+          { disciplina: 'Redes', codigoEdital: '1.2', descricao: 'IPv6.' },
+        ],
+      })
+      .expect(201);
+
+    const topicos = await eu.get('/api/topicos').expect(200);
+    const topicoId = topicos.body.data.find(
+      (t: { codigoEdital: string }) => t.codigoEdital === '1.1',
+    ).id;
+
+    await eu
+      .post('/api/sessoes')
+      .send({ topicoId, tempoMinutos: 30, tipoEstudo: 'Teoria' })
+      .expect(201);
+
+    const lista = await eu.get('/api/cargos').expect(200);
+    const meu = lista.body.data.find((c: { id: number }) => c.id === cargo.body.data.id);
+
+    expect(meu.totais).toEqual({ topicos: 2, sessoes: 1 });
+  });
+
+  test('apagar o único cargo leva o concurso junto', async () => {
+    // Concurso sem cargo sumiria da lista e não teria como ser removido pela
+    // interface — vira lixo invisível no banco.
+    const concurso = await eu
+      .post('/api/concursos')
+      .send({ nome: `__teste_crud__ órfão ${Date.now()}` })
+      .expect(201);
+    const cargo = await eu
+      .post('/api/cargos')
+      .send({ concursoId: concurso.body.data.id, nome: 'Único cargo' })
+      .expect(201);
+
+    await eu.delete(`/api/cargos/${cargo.body.data.id}`).expect(204);
+
+    await eu.get(`/api/concursos/${concurso.body.data.id}`).expect(404);
+  });
+
+  test('com dois cargos, apagar um preserva o concurso e o outro', async () => {
+    const concurso = await eu
+      .post('/api/concursos')
+      .send({ nome: `__teste_crud__ dois cargos ${Date.now()}` })
+      .expect(201);
+    const primeiro = await eu
+      .post('/api/cargos')
+      .send({ concursoId: concurso.body.data.id, nome: 'Perfil A' })
+      .expect(201);
+    const segundo = await eu
+      .post('/api/cargos')
+      .send({ concursoId: concurso.body.data.id, nome: 'Perfil B' })
+      .expect(201);
+
+    await eu.delete(`/api/cargos/${primeiro.body.data.id}`).expect(204);
+
+    const restante = await eu.get(`/api/concursos/${concurso.body.data.id}`).expect(200);
+    expect(restante.body.data.cargos).toHaveLength(1);
+    expect(restante.body.data.cargos[0].id).toBe(segundo.body.data.id);
+  });
+});

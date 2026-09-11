@@ -6,7 +6,12 @@ import { filtroCargo, filtroConcurso } from '../../http/posse.js';
 import { prisma } from '../../lib/prisma.js';
 import { idDoUsuario } from '../../middlewares/autenticacao.js';
 import { atualizarCargoSchema, criarCargoSchema, importarEditalSchema } from './cargos.schema.js';
-import { importarEdital, montarEditalVerticalizado } from './cargos.service.js';
+import {
+  excluirCargoEConcursoOrfao,
+  importarEdital,
+  montarEditalVerticalizado,
+  totaisPorCargo,
+} from './cargos.service.js';
 
 export const cargosRoutes = Router();
 
@@ -14,16 +19,26 @@ cargosRoutes.get('/', async (req, res) => {
   const { concursoId } = filtroOpcional('concursoId').parse(req.query);
   const usuarioId = idDoUsuario(req);
 
-  const cargos = await prisma.cargo.findMany({
-    where: { ...filtroCargo(usuarioId), ...(concursoId && { concursoId }) },
-    orderBy: [{ concursoId: 'asc' }, { nome: 'asc' }],
-    include: {
-      concurso: { select: { id: true, nome: true, banca: true } },
-      _count: { select: { disciplinas: true, simulados: true } },
-    },
-  });
+  const [cargos, totais] = await Promise.all([
+    prisma.cargo.findMany({
+      where: { ...filtroCargo(usuarioId), ...(concursoId && { concursoId }) },
+      orderBy: [{ concursoId: 'asc' }, { nome: 'asc' }],
+      include: {
+        concurso: { select: { id: true, nome: true, banca: true } },
+        _count: { select: { disciplinas: true, simulados: true } },
+      },
+    }),
+    totaisPorCargo(usuarioId),
+  ]);
 
-  res.json(sucesso(cargos));
+  res.json(
+    sucesso(
+      cargos.map((cargo) => ({
+        ...cargo,
+        totais: totais.get(cargo.id) ?? { topicos: 0, sessoes: 0 },
+      })),
+    ),
+  );
 });
 
 cargosRoutes.post('/', async (req, res) => {
@@ -90,16 +105,11 @@ cargosRoutes.patch('/:id', async (req, res) => {
   res.json(sucesso(await prisma.cargo.findUnique({ where: { id } })));
 });
 
+/** Apaga o cargo; se era o ultimo do concurso, o concurso vai junto. */
 cargosRoutes.delete('/:id', async (req, res) => {
   const { id } = idParamSchema.parse(req.params);
 
-  const { count } = await prisma.cargo.deleteMany({
-    where: { id, ...filtroCargo(idDoUsuario(req)) },
-  });
-
-  if (count === 0) {
-    throw new NaoEncontradoError('Cargo', id);
-  }
+  await excluirCargoEConcursoOrfao(id, idDoUsuario(req));
 
   res.status(204).send();
 });

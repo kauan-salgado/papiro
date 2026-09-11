@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useCargos } from '../hooks/useEdital.js';
 import { useCarregarExemplos } from '../hooks/useExemplos.js';
 import { useEhVisitante } from '../hooks/useAmbiente.js';
+import { CartaoEdital } from '../components/edital/CartaoEdital.js';
 import { Botao } from '../components/ui/Botao.js';
 import { Carregando } from '../components/ui/Carregando.js';
 import { EstadoVazio } from '../components/ui/EstadoVazio.js';
@@ -77,25 +78,7 @@ export function PaginaInicial() {
 
       <ul className="cartoes">
         {cargos.map((cargo) => (
-          <li key={cargo.id} className="cartao">
-            <p className="cartao__banca">{cargo.concurso.banca ?? 'banca não informada'}</p>
-            <h3 className="cartao__concurso">{cargo.concurso.nome}</h3>
-            <p className="cartao__cargo">{cargo.nome}</p>
-
-            <p className="cartao__numeros">
-              <span>{cargo._count.disciplinas} disciplinas</span>
-              <span>{cargo._count.simulados} simulados</span>
-            </p>
-
-            <div className="cartao__acoes">
-              <Link className="cartao__acao" to={`/cargos/${cargo.id}/edital`}>
-                Abrir edital
-              </Link>
-              <Link className="cartao__acao cartao__acao--sutil" to={`/cargos/${cargo.id}/dashboard`}>
-                Ver desempenho
-              </Link>
-            </div>
-          </li>
+          <CartaoEdital key={cargo.id} cargo={cargo} somenteLeitura={ehVisitante} />
         ))}
       </ul>
     </>

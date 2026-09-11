@@ -1,0 +1,33 @@
+/* Confirmacao de exclusao dentro do proprio cartao, sem modal: o contexto do
+   que sera apagado continua visivel enquanto a pessoa decide. */
+
+.cartao[data-confirmando='true'] {
+  border-color: var(--color-negative);
+  border-block-end-color: var(--color-negative);
+}
+
+.cartao__confirmacao {
+  margin-block-start: auto;
+  padding-block-start: var(--space-sm);
+  border-block-start: 1px solid var(--color-rule);
+}
+
+.cartao__aviso {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--text-small);
+  color: var(--color-ink-soft);
+}
+
+.cartao__aviso strong {
+  color: var(--color-negative);
+}
+
+.cartao__erro {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--text-caption);
+  color: var(--color-negative);
+}
+
+.cartao__apagar {
+  margin-inline-start: auto;
+}

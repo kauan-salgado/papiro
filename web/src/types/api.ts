@@ -23,6 +23,8 @@ export type Cargo = {
   readonly nome: string;
   readonly concurso: Pick<Concurso, 'id' | 'nome' | 'banca'>;
   readonly _count: { readonly disciplinas: number; readonly simulados: number };
+  /** Usado pela confirmação de exclusão: o que se perde ao apagar. */
+  readonly totais: { readonly topicos: number; readonly sessoes: number };
 };
 
 export type DesempenhoTopico = {

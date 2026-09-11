@@ -19,6 +19,7 @@ const CARGOS: Cargo[] = [
     nome: 'Área de Computação',
     concurso: { id: 1, nome: 'Concurso Alfa', banca: 'Banca Alfa' },
     _count: { disciplinas: 8, simulados: 1 },
+    totais: { topicos: 0, sessoes: 0 },
   },
   {
     id: 8,
@@ -26,6 +27,7 @@ const CARGOS: Cargo[] = [
     nome: 'Perfil de Segurança',
     concurso: { id: 2, nome: 'Concurso Beta', banca: 'Banca Beta' },
     _count: { disciplinas: 6, simulados: 0 },
+    totais: { topicos: 0, sessoes: 0 },
   },
 ];
 

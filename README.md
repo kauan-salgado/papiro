@@ -30,7 +30,7 @@ pelo Postgres, nao apenas pelo formulario.
 | --- | --- |
 | **Ideia central** | Todo agregado e `SUM` sobre uma fact table. Nenhum contador mutavel. |
 | **Regras de negocio** | `CHECK constraint` no Postgres, Zod na API, Zod no formulario — nessa ordem de autoridade |
-| **Testes** | 234 no total: 99 na API (contra Postgres real) e 135 no front |
+| **Testes** | 253 no total: 102 na API (contra Postgres real) e 151 no front |
 | **Cobertura** | API 88,9% de linhas · front 94,7% — limites fixados no `vitest.config.ts` |
 | **Acessibilidade** | 0 falha de contraste WCAG AA nas duas telas, medida sobre os elementos renderizados |
 | **No ar** | [papiro-concursos.vercel.app](https://papiro-concursos.vercel.app) — Vercel (front + API serverless, mesma origem) + Neon em Sao Paulo |
@@ -368,6 +368,16 @@ Duas travas fecham o resto:
   importacao, que exigem conta de verdade.
 - **`/auth/eu` continua respondendo `null` para o visitante.** Ele nao esta
   logado; se a rota dissesse o contrario, o front esconderia o botao de entrar.
+
+### Apagar um edital
+
+A confirmacao diz o que se perde — *"remove 94 topicos e 12 sessoes de estudo"* —
+em vez de um "tem certeza?" vazio. Os numeros vem da view, que ja agrega; contar
+em JavaScript exigiria trazer todos os topicos so para medir o tamanho deles.
+
+Apagar leva junto o concurso quando aquele era o unico cargo dele. Concurso sem
+cargo nao aparece em lugar nenhum da interface (a lista mostra cargos) e nao
+teria como ser removido — viraria lixo invisivel no banco.
 
 ### Conta nova
 

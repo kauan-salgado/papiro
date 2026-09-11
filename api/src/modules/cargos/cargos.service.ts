@@ -46,6 +46,57 @@ export async function montarEditalVerticalizado(cargoId: number, usuarioId: numb
   };
 }
 
+/**
+ * Quantos topicos e sessoes cada cargo tem.
+ *
+ * Sai da view, que ja agrega — contar em JavaScript exigiria trazer todos os
+ * topicos so para medir o tamanho deles. Serve para a confirmacao de exclusao
+ * dizer o que se perde, em vez de um "tem certeza?" vazio.
+ */
+export async function totaisPorCargo(usuarioId: number) {
+  const linhas = (await prisma.$queryRawUnsafe(
+    `SELECT cargo_id::int                       AS "cargoId",
+            count(*)::int                       AS "topicos",
+            COALESCE(SUM(total_sessoes), 0)::int AS "sessoes"
+     FROM vw_desempenho_topico
+     WHERE usuario_id = $1::int
+     GROUP BY cargo_id`,
+    usuarioId,
+  )) as { cargoId: number; topicos: number; sessoes: number }[];
+
+  return new Map(linhas.map((l) => [l.cargoId, { topicos: l.topicos, sessoes: l.sessoes }]));
+}
+
+/**
+ * Apaga o cargo e, se ele era o ultimo, o concurso junto.
+ *
+ * Concurso sem cargo nao significa nada no Papiro: ficaria invisivel na lista
+ * (que mostra cargos) e impossivel de remover pela interface — exatamente o
+ * tipo de lixo que so aparece quando alguem vai olhar o banco.
+ */
+export async function excluirCargoEConcursoOrfao(cargoId: number, usuarioId: number) {
+  const cargo = await prisma.cargo.findFirst({
+    where: { id: cargoId, ...filtroCargo(usuarioId) },
+    select: { id: true, concursoId: true },
+  });
+
+  if (!cargo) {
+    throw new NaoEncontradoError('Cargo', cargoId);
+  }
+
+  return prisma.$transaction(async (tx) => {
+    await tx.cargo.delete({ where: { id: cargo.id } });
+
+    const restantes = await tx.cargo.count({ where: { concursoId: cargo.concursoId } });
+
+    if (restantes === 0) {
+      await tx.concurso.delete({ where: { id: cargo.concursoId } });
+    }
+
+    return { concursoRemovido: restantes === 0 };
+  });
+}
+
 function agruparPorDisciplina(
   itens: readonly ItemEdital[],
 ): ReadonlyMap<string, readonly ItemEdital[]> {
