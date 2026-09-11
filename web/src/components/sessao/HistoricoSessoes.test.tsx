@@ -17,6 +17,8 @@ const CARGO_ID = 7;
 function sessao(parcial: Partial<Sessao> = {}): Sessao {
   return {
     id: 1,
+    cargoId: CARGO_ID,
+    disciplinaId: 5,
     topicoId: TOPICO_ID,
     simuladoId: null,
     data: '2026-09-10',
@@ -36,7 +38,9 @@ beforeEach(() => {
 });
 
 function renderizar() {
-  return renderComProvedores(<HistoricoSessoes topicoId={TOPICO_ID} cargoId={CARGO_ID} />);
+  return renderComProvedores(
+    <HistoricoSessoes alvo={{ tipo: 'topico', id: TOPICO_ID }} cargoId={CARGO_ID} />,
+  );
 }
 
 describe('HistoricoSessoes', () => {

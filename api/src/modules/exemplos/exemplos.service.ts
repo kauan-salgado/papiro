@@ -84,9 +84,11 @@ export async function carregarExemplos(usuarioId: number): Promise<ResultadoExem
 
     const topicos = await prisma.topico.findMany({
       where: { disciplina: { cargoId } },
-      select: { id: true },
+      select: { id: true, disciplinaId: true },
       orderBy: { id: 'asc' },
     });
+
+    const disciplinaDoTopico = new Map(topicos.map((t) => [t.id, t.disciplinaId]));
 
     const simulado = await prisma.simulado.create({
       data: { cargoId, nome: 'Simulado diagnóstico', data: new Date() },
@@ -100,6 +102,10 @@ export async function carregarExemplos(usuarioId: number): Promise<ResultadoExem
     const { count } = await prisma.sessaoEstudo.createMany({
       data: sessoes.map(({ noSimulado, ...sessao }) => ({
         ...sessao,
+        // A sessao carrega os tres niveis: o topico e o alvo, e os de cima
+        // saem dele.
+        cargoId,
+        disciplinaId: disciplinaDoTopico.get(sessao.topicoId) ?? null,
         simuladoId: noSimulado ? simulado.id : null,
       })),
     });

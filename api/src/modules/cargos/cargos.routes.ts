@@ -5,6 +5,7 @@ import { filtroOpcional, idParamSchema } from '../../http/params.js';
 import { filtroCargo, filtroConcurso } from '../../http/posse.js';
 import { prisma } from '../../lib/prisma.js';
 import { idDoUsuario } from '../../middlewares/autenticacao.js';
+import { listarSessoesDoCargo } from '../sessoes/sessoes.service.js';
 import { atualizarCargoSchema, criarCargoSchema, importarEditalSchema } from './cargos.schema.js';
 import {
   excluirCargoEConcursoOrfao,
@@ -79,6 +80,13 @@ cargosRoutes.get('/:id/edital', async (req, res) => {
   const { id } = idParamSchema.parse(req.params);
 
   res.json(sucesso(await montarEditalVerticalizado(id, idDoUsuario(req))));
+});
+
+/** Simulados e estudo geral: o que nao pertence a disciplina alguma. */
+cargosRoutes.get('/:id/sessoes', async (req, res) => {
+  const { id } = idParamSchema.parse(req.params);
+
+  res.json(sucesso(await listarSessoesDoCargo(id, idDoUsuario(req))));
 });
 
 /** Importacao em lote: [{ disciplina, codigoEdital, descricao }, ...]. */

@@ -2,7 +2,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { ApiError } from '../../lib/api.js';
-import { useRegistrarSessao, useSimulados, type NovaSessao } from '../../hooks/useSessoes.js';
+import {
+  useRegistrarSessao,
+  useSimulados,
+  type Alvo,
+  type NovaSessao,
+} from '../../hooks/useSessoes.js';
 import { ROTULO_TIPO_ESTUDO, TIPOS_DE_ESTUDO, type TipoEstudo } from '../../types/api.js';
 import { Botao } from '../ui/Botao.js';
 import { CamposDeQuestoes } from './CamposDeQuestoes.js';
@@ -16,7 +21,8 @@ import {
 import './sessao.css';
 
 type Props = {
-  readonly topicoId: number;
+  /** Item do edital, materia inteira ou prova — o formulario e o mesmo. */
+  readonly alvo: Alvo;
   readonly cargoId: number;
 };
 
@@ -31,8 +37,8 @@ const VALORES_INICIAIS: SessaoFormEntrada = {
   questoesBrancas: undefined,
 };
 
-export function FormularioSessao({ topicoId, cargoId }: Props) {
-  const registrar = useRegistrarSessao(cargoId, topicoId);
+export function FormularioSessao({ alvo, cargoId }: Props) {
+  const registrar = useRegistrarSessao(cargoId, alvo);
   const { data: simulados = [] } = useSimulados(cargoId);
 
   const {
@@ -63,7 +69,10 @@ export function FormularioSessao({ topicoId, cargoId }: Props) {
 
   const aoEnviar = handleSubmit(async (valores) => {
     const sessao: NovaSessao = {
-      topicoId,
+      // Exatamente um alvo: o backend deriva os niveis acima e recusa combinacao.
+      ...(alvo.tipo === 'topico' && { topicoId: alvo.id }),
+      ...(alvo.tipo === 'disciplina' && { disciplinaId: alvo.id }),
+      ...(alvo.tipo === 'cargo' && { cargoId: alvo.id }),
       data: valores.data,
       tempoMinutos: valores.tempoMinutos,
       tipoEstudo: valores.tipoEstudo as TipoEstudo,

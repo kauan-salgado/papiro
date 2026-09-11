@@ -146,8 +146,19 @@ describe('POST /api/sessoes', () => {
 describe('CHECK constraint do Postgres', () => {
   test('rejeita sessao invalida mesmo contornando a API', async () => {
     // Esta e a razao de a regra nao viver so no formulario.
+    const topico = await prisma.topico.findUniqueOrThrow({
+      where: { id: topicoId },
+      select: { disciplinaId: true, disciplina: { select: { cargoId: true } } },
+    });
+
     const gravar = prisma.sessaoEstudo.create({
-      data: { topicoId, tempoMinutos: 30, tipoEstudo: 'Questoes' },
+      data: {
+        cargoId: topico.disciplina.cargoId,
+        disciplinaId: topico.disciplinaId,
+        topicoId,
+        tempoMinutos: 30,
+        tipoEstudo: 'Questoes',
+      },
     });
 
     await expect(gravar).rejects.toMatchObject({

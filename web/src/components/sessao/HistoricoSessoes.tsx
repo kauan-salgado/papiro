@@ -1,5 +1,5 @@
 import { useEhVisitante } from '../../hooks/useAmbiente.js';
-import { useExcluirSessao, useSessoesDoTopico } from '../../hooks/useSessoes.js';
+import { useExcluirSessao, useSessoesDoAlvo, type Alvo } from '../../hooks/useSessoes.js';
 import { formatarData, formatarDuracao } from '../../lib/formatar.js';
 import { ROTULO_TIPO_ESTUDO, type Sessao } from '../../types/api.js';
 import { Botao } from '../ui/Botao.js';
@@ -7,8 +7,10 @@ import { Carregando } from '../ui/Carregando.js';
 import './sessao.css';
 
 type Props = {
-  readonly topicoId: number;
+  readonly alvo: Alvo;
   readonly cargoId: number;
+  /** Texto do estado vazio: muda conforme o nivel. */
+  readonly textoVazio?: string;
 };
 
 function resultado(sessao: Sessao): string | null {
@@ -22,9 +24,9 @@ function resultado(sessao: Sessao): string | null {
   return `${sessao.questoesAcertadas}/${total} questões`;
 }
 
-export function HistoricoSessoes({ topicoId, cargoId }: Props) {
-  const { data: sessoes, isPending } = useSessoesDoTopico(topicoId);
-  const excluir = useExcluirSessao(cargoId, topicoId);
+export function HistoricoSessoes({ alvo, cargoId, textoVazio }: Props) {
+  const { data: sessoes, isPending } = useSessoesDoAlvo(alvo);
+  const excluir = useExcluirSessao(cargoId, alvo);
   const ehVisitante = useEhVisitante();
 
   if (isPending) {
@@ -32,7 +34,11 @@ export function HistoricoSessoes({ topicoId, cargoId }: Props) {
   }
 
   if (!sessoes || sessoes.length === 0) {
-    return <p className="historico__vazio">Nenhuma sessão registrada neste tópico ainda.</p>;
+    return (
+      <p className="historico__vazio">
+        {textoVazio ?? 'Nenhuma sessão registrada neste tópico ainda.'}
+      </p>
+    );
   }
 
   return (

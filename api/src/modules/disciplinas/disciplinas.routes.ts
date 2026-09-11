@@ -5,6 +5,7 @@ import { filtroOpcional, idParamSchema } from '../../http/params.js';
 import { filtroCargo, filtroDisciplina } from '../../http/posse.js';
 import { prisma } from '../../lib/prisma.js';
 import { idDoUsuario } from '../../middlewares/autenticacao.js';
+import { listarSessoesDaDisciplina } from '../sessoes/sessoes.service.js';
 import { atualizarDisciplinaSchema, criarDisciplinaSchema } from './disciplinas.schema.js';
 
 export const disciplinasRoutes = Router();
@@ -53,6 +54,13 @@ disciplinasRoutes.get('/:id', async (req, res) => {
   }
 
   res.json(sucesso(disciplina));
+});
+
+/** Baterias avulsas da materia — o que nao cabe em um item do edital. */
+disciplinasRoutes.get('/:id/sessoes', async (req, res) => {
+  const { id } = idParamSchema.parse(req.params);
+
+  res.json(sucesso(await listarSessoesDaDisciplina(id, idDoUsuario(req))));
 });
 
 disciplinasRoutes.patch('/:id', async (req, res) => {

@@ -71,7 +71,9 @@ export type Edital = {
 
 export type Sessao = {
   readonly id: number;
-  readonly topicoId: number;
+  readonly cargoId: number;
+  readonly disciplinaId: number | null;
+  readonly topicoId: number | null;
   readonly simuladoId: number | null;
   readonly data: string;
   readonly tempoMinutos: number;

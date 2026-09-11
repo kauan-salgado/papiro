@@ -1,7 +1,4 @@
-import { Link } from 'react-router-dom';
-import { useEhVisitante } from '../../hooks/useAmbiente.js';
-import { FormularioSessao } from '../sessao/FormularioSessao.js';
-import { HistoricoSessoes } from '../sessao/HistoricoSessoes.js';
+import { PainelDeRegistro } from './PainelDeRegistro.js';
 import { formatarDataCurta, formatarDuracao, faixaDeDesempenho, formatarPercentual } from '../../lib/formatar.js';
 import type { DesempenhoTopico } from '../../types/api.js';
 import { Selo } from '../ui/Selo.js';
@@ -22,7 +19,6 @@ type Props = {
 export function TopicoLinha({ topico, cargoId, aberto, aoAlternar }: Props) {
   const painelId = `painel-topico-${topico.topicoId}`;
   const estudado = topico.totalSessoes > 0;
-  const ehVisitante = useEhVisitante();
 
   return (
     <li className="topico" data-aberto={aberto} data-estudado={estudado}>
@@ -57,16 +53,12 @@ export function TopicoLinha({ topico, cargoId, aberto, aoAlternar }: Props) {
 
       {aberto && (
         <div className="topico__painel" id={painelId}>
-          {ehVisitante ? (
-            <p className="convite">
-              Este é o painel onde cada sessão de estudo é registrada.{' '}
-              <Link to="/entrar">Entre com o GitHub</Link> para registrar as suas — aqui você está
-              vendo uma conta de exemplo.
-            </p>
-          ) : (
-            <FormularioSessao topicoId={topico.topicoId} cargoId={cargoId} />
-          )}
-          <HistoricoSessoes topicoId={topico.topicoId} cargoId={cargoId} />
+          <PainelDeRegistro
+            alvo={{ tipo: 'topico', id: topico.topicoId }}
+            cargoId={cargoId}
+            convite="Este é o painel onde cada sessão de estudo é registrada."
+            textoVazio="Nenhuma sessão registrada neste tópico ainda."
+          />
         </div>
       )}
     </li>

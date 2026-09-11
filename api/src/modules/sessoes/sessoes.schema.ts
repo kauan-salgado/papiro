@@ -5,7 +5,14 @@ import { dataISOSchema } from '../../lib/datas.js';
 const MINUTOS_EM_UM_DIA = 1440;
 
 const baseSessao = z.object({
-  topicoId: idNumerico,
+  /**
+   * Onde o estudo entra. Exatamente um dos tres — quem verifica isso e o
+   * service, que precisa consultar o banco de qualquer forma para conferir a
+   * posse e derivar os niveis acima.
+   */
+  topicoId: idNumerico.optional(),
+  disciplinaId: idNumerico.optional(),
+  cargoId: idNumerico.optional(),
   /** Opcional: nem toda sessao pertence a um simulado. */
   simuladoId: idNumerico.nullish(),
   data: dataISOSchema.optional(),

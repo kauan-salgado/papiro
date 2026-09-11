@@ -30,7 +30,7 @@ pelo Postgres, nao apenas pelo formulario.
 | --- | --- |
 | **Ideia central** | Todo agregado e `SUM` sobre uma fact table. Nenhum contador mutavel. |
 | **Regras de negocio** | `CHECK constraint` no Postgres, Zod na API, Zod no formulario — nessa ordem de autoridade |
-| **Testes** | 253 no total: 102 na API (contra Postgres real) e 151 no front |
+| **Testes** | 271 no total: 114 na API (contra Postgres real) e 157 no front |
 | **Cobertura** | API 88,9% de linhas · front 94,7% — limites fixados no `vitest.config.ts` |
 | **Acessibilidade** | 0 falha de contraste WCAG AA nas duas telas, medida sobre os elementos renderizados |
 | **No ar** | [papiro-concursos.vercel.app](https://papiro-concursos.vercel.app) — Vercel (front + API serverless, mesma origem) + Neon em Sao Paulo |
@@ -152,6 +152,23 @@ proprias. Se o Cargo fosse a raiz, os dois editais colidiriam e o percentual de
 acerto de um contaminaria o do outro. O seed demonstra isso de proposito:
 IDS/IPS/SIEM existe nos dois editais de exemplo, com codigos `7.5` e `3.4` e
 textos distintos.
+
+**1.5. A sessao entra em um de tres niveis.** Nem todo estudo cabe em um item
+do edital: uma bateria de 30 questoes avulsas e "de Seguranca da Informacao", e
+um simulado e da prova inteira. Forcar um topico nesses casos obrigaria a
+inventar itens que o edital nao tem — e sujaria a estatistica do item escolhido
+com horas que nao eram dele.
+
+```text
+topico preenchido  -> estudo de um item do edital
+so disciplina      -> bateria avulsa da materia
+so cargo           -> simulado da prova inteira
+```
+
+Os niveis acima sao **derivados**, nunca aceitos do cliente, e duas chaves
+estrangeiras compostas garantem a coerencia no banco: disciplina de outro cargo
+ou topico de outra disciplina sao recusados pelo Postgres, nao apenas pela
+aplicacao.
 
 **2. Sessao de Estudo e fact table, nao contador.** Uma linha por sessao
 realizada, imutavel depois de gravada. Nenhuma tabela guarda "total de minutos

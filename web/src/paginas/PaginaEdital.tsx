@@ -1,5 +1,6 @@
 import { useParams, useSearchParams } from 'react-router-dom';
 import { DisciplinaGrupo } from '../components/edital/DisciplinaGrupo.js';
+import { LinhaSimulado } from '../components/edital/LinhaSimulado.js';
 import { Carregando } from '../components/ui/Carregando.js';
 import { EstadoVazio } from '../components/ui/EstadoVazio.js';
 import { useEhVisitante } from '../hooks/useAmbiente.js';
@@ -15,19 +16,27 @@ export function PaginaEdital() {
   const ehVisitante = useEhVisitante();
 
   const topicoAberto = parametros.has('topico') ? Number(parametros.get('topico')) : null;
+  const disciplinaAberta = parametros.has('materia') ? Number(parametros.get('materia')) : null;
+  const simuladoAberto = parametros.has('simulado');
 
-  /** O topico aberto vive na URL: recarregar ou compartilhar o link preserva o lugar. */
-  const alternarTopico = (topicoId: number) => {
-    const proximos = new URLSearchParams(parametros);
+  /**
+   * O painel aberto vive na URL: recarregar ou compartilhar o link preserva o
+   * lugar. Abrir um fecha os outros — dois formularios de registro na tela ao
+   * mesmo tempo so criariam duvida sobre onde o estudo vai entrar.
+   */
+  function abrirPainel(chave: 'topico' | 'materia' | 'simulado', id?: number) {
+    const proximos = new URLSearchParams();
+    const jaAberto =
+      (chave === 'topico' && topicoAberto === id) ||
+      (chave === 'materia' && disciplinaAberta === id) ||
+      (chave === 'simulado' && simuladoAberto);
 
-    if (topicoAberto === topicoId) {
-      proximos.delete('topico');
-    } else {
-      proximos.set('topico', String(topicoId));
+    if (!jaAberto) {
+      proximos.set(chave, id === undefined ? '1' : String(id));
     }
 
     definirParametros(proximos, { replace: true });
-  };
+  }
 
   if (isPending) {
     return <Carregando linhas={6} rotulo="Carregando edital" />;
@@ -62,13 +71,21 @@ export function PaginaEdital() {
         </p>
       </section>
 
+      <LinhaSimulado
+        cargoId={Number(cargoId)}
+        aberto={simuladoAberto}
+        aoAlternar={() => abrirPainel('simulado')}
+      />
+
       {edital.disciplinas.map((disciplina) => (
         <DisciplinaGrupo
           key={disciplina.disciplinaId}
           disciplina={disciplina}
           cargoId={Number(cargoId)}
           topicoAberto={topicoAberto}
-          aoAlternarTopico={alternarTopico}
+          aoAlternarTopico={(id) => abrirPainel('topico', id)}
+          disciplinaAberta={disciplinaAberta === disciplina.disciplinaId}
+          aoAlternarDisciplina={(id) => abrirPainel('materia', id)}
         />
       ))}
     </>

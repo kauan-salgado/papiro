@@ -112,9 +112,11 @@ async function importarEdital(edital: EditalSeed, usuarioId: number): Promise<nu
 async function gerarHistoricoDemo(cargoId: number, semente: number): Promise<void> {
   const topicos = await prisma.topico.findMany({
     where: { disciplina: { cargoId } },
-    select: { id: true },
+    select: { id: true, disciplinaId: true },
     orderBy: { id: 'asc' },
   });
+
+  const disciplinaDoTopico = new Map(topicos.map((t) => [t.id, t.disciplinaId]));
 
   const sessoes = gerarSessoesDemo(
     topicos.map((topico) => topico.id),
@@ -128,6 +130,8 @@ async function gerarHistoricoDemo(cargoId: number, semente: number): Promise<voi
   await prisma.sessaoEstudo.createMany({
     data: sessoes.map(({ noSimulado, ...sessao }) => ({
       ...sessao,
+      cargoId,
+      disciplinaId: disciplinaDoTopico.get(sessao.topicoId) ?? null,
       simuladoId: noSimulado ? simulado.id : null,
     })),
   });

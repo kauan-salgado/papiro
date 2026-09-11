@@ -27,8 +27,15 @@ export function filtroTopico(usuarioId: number) {
   return { disciplina: { cargo: { concurso: { usuarioId } } } };
 }
 
+/**
+ * Posse da sessao pelo cargo, e nao pelo topico.
+ *
+ * Desde que a sessao passou a existir em tres niveis, o topico e opcional — e
+ * um filtro que passa por ele deixaria de enxergar as baterias avulsas e os
+ * simulados, que nao tem topico algum. O cargo, esse, toda sessao tem.
+ */
 export function filtroSessao(usuarioId: number) {
-  return { topico: filtroTopico(usuarioId) };
+  return { cargo: { concurso: { usuarioId } } };
 }
 
 export function filtroSimulado(usuarioId: number) {

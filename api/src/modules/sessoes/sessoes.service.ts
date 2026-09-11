@@ -1,5 +1,11 @@
 import { NaoEncontradoError, RequisicaoInvalidaError } from '../../http/erros.js';
-import { filtroSessao, filtroSimulado, filtroTopico } from '../../http/posse.js';
+import {
+  filtroCargo,
+  filtroDisciplina,
+  filtroSessao,
+  filtroSimulado,
+  filtroTopico,
+} from '../../http/posse.js';
 import { formatarDataISO, paraDataDoBanco } from '../../lib/datas.js';
 import { prisma } from '../../lib/prisma.js';
 import type { CriarSessao } from './sessoes.schema.js';
@@ -11,6 +17,8 @@ function paraDTO<T extends { data: Date }>(sessao: T) {
 
 const SELECAO_PADRAO = {
   id: true,
+  cargoId: true,
+  disciplinaId: true,
   topicoId: true,
   simuladoId: true,
   data: true,
@@ -31,51 +39,101 @@ const SELECAO_PADRAO = {
  * simulado passaria a somar questoes de outro concurso.
  */
 async function garantirSimuladoDoMesmoCargo(
-  topicoId: number,
+  cargoId: number,
   simuladoId: number,
   usuarioId: number,
 ): Promise<void> {
-  const [topico, simulado] = await Promise.all([
-    prisma.topico.findFirst({
-      where: { id: topicoId, ...filtroTopico(usuarioId) },
-      select: { disciplina: { select: { cargoId: true } } },
-    }),
-    prisma.simulado.findFirst({
-      where: { id: simuladoId, ...filtroSimulado(usuarioId) },
-      select: { cargoId: true },
-    }),
-  ]);
+  const simulado = await prisma.simulado.findFirst({
+    where: { id: simuladoId, ...filtroSimulado(usuarioId) },
+    select: { cargoId: true },
+  });
 
   if (!simulado) {
     throw new RequisicaoInvalidaError(`Simulado ${simuladoId} nao encontrado.`);
   }
 
-  if (topico && topico.disciplina.cargoId !== simulado.cargoId) {
+  if (cargoId !== simulado.cargoId) {
     throw new RequisicaoInvalidaError(
       'O simulado pertence a outro cargo; ele nao pode agrupar sessoes deste topico.',
     );
   }
 }
 
-export async function registrarSessao(dados: CriarSessao, usuarioId: number) {
-  // O topico precisa ser do proprio usuario: sem isto, bastaria mandar o id do
-  // topico de outra pessoa para gravar estudo na conta dela.
-  const topico = await prisma.topico.findFirst({
-    where: { id: dados.topicoId, ...filtroTopico(usuarioId) },
+/** Os tres niveis em que um estudo pode entrar. */
+type Alvo = { cargoId: number; disciplinaId: number | null; topicoId: number | null };
+
+/**
+ * Descobre em que nivel a sessao entra e confere a posse na mesma consulta.
+ *
+ * Os niveis acima sao derivados, nunca aceitos do cliente: mandar topico de uma
+ * disciplina e disciplina de outra seria incoerente, e a chave estrangeira
+ * composta do banco recusaria — melhor nem chegar la.
+ */
+async function resolverAlvo(dados: CriarSessao, usuarioId: number): Promise<Alvo> {
+  const informados = [dados.topicoId, dados.disciplinaId, dados.cargoId].filter(
+    (valor) => valor !== undefined,
+  );
+
+  if (informados.length !== 1) {
+    throw new RequisicaoInvalidaError(
+      'Informe exatamente um alvo: topicoId, disciplinaId ou cargoId.',
+    );
+  }
+
+  if (dados.topicoId !== undefined) {
+    const topico = await prisma.topico.findFirst({
+      where: { id: dados.topicoId, ...filtroTopico(usuarioId) },
+      select: { id: true, disciplinaId: true, disciplina: { select: { cargoId: true } } },
+    });
+
+    if (!topico) {
+      throw new NaoEncontradoError('Topico', dados.topicoId);
+    }
+
+    return {
+      cargoId: topico.disciplina.cargoId,
+      disciplinaId: topico.disciplinaId,
+      topicoId: topico.id,
+    };
+  }
+
+  if (dados.disciplinaId !== undefined) {
+    const disciplina = await prisma.disciplina.findFirst({
+      where: { id: dados.disciplinaId, ...filtroDisciplina(usuarioId) },
+      select: { id: true, cargoId: true },
+    });
+
+    if (!disciplina) {
+      throw new NaoEncontradoError('Disciplina', dados.disciplinaId);
+    }
+
+    return { cargoId: disciplina.cargoId, disciplinaId: disciplina.id, topicoId: null };
+  }
+
+  const cargo = await prisma.cargo.findFirst({
+    where: { id: dados.cargoId, ...filtroCargo(usuarioId) },
     select: { id: true },
   });
 
-  if (!topico) {
-    throw new NaoEncontradoError('Topico', dados.topicoId);
+  if (!cargo) {
+    throw new NaoEncontradoError('Cargo', dados.cargoId ?? 0);
   }
 
+  return { cargoId: cargo.id, disciplinaId: null, topicoId: null };
+}
+
+export async function registrarSessao(dados: CriarSessao, usuarioId: number) {
+  const alvo = await resolverAlvo(dados, usuarioId);
+
   if (dados.simuladoId) {
-    await garantirSimuladoDoMesmoCargo(dados.topicoId, dados.simuladoId, usuarioId);
+    await garantirSimuladoDoMesmoCargo(alvo.cargoId, dados.simuladoId, usuarioId);
   }
 
   const sessao = await prisma.sessaoEstudo.create({
     data: {
-      topicoId: dados.topicoId,
+      cargoId: alvo.cargoId,
+      disciplinaId: alvo.disciplinaId,
+      topicoId: alvo.topicoId,
       simuladoId: dados.simuladoId ?? null,
       ...(dados.data && { data: paraDataDoBanco(dados.data) }),
       tempoMinutos: dados.tempoMinutos,
@@ -109,4 +167,32 @@ export async function excluirSessao(id: number, usuarioId: number): Promise<void
   if (count === 0) {
     throw new NaoEncontradoError('Sessao', id);
   }
+}
+
+/**
+ * Historico da disciplina: so as baterias avulsas, sem as sessoes dos topicos.
+ *
+ * Misturar as duas coisas aqui repetiria na tela o que ja aparece item a item
+ * logo abaixo — o painel da disciplina existe para mostrar o que NAO tem lugar
+ * no edital.
+ */
+export async function listarSessoesDaDisciplina(disciplinaId: number, usuarioId: number) {
+  const sessoes = await prisma.sessaoEstudo.findMany({
+    where: { disciplinaId, topicoId: null, ...filtroSessao(usuarioId) },
+    orderBy: [{ data: 'desc' }, { id: 'desc' }],
+    select: SELECAO_PADRAO,
+  });
+
+  return sessoes.map(paraDTO);
+}
+
+/** Historico do cargo: simulados e estudo que nao pertence a disciplina alguma. */
+export async function listarSessoesDoCargo(cargoId: number, usuarioId: number) {
+  const sessoes = await prisma.sessaoEstudo.findMany({
+    where: { cargoId, disciplinaId: null, ...filtroSessao(usuarioId) },
+    orderBy: [{ data: 'desc' }, { id: 'desc' }],
+    select: SELECAO_PADRAO,
+  });
+
+  return sessoes.map(paraDTO);
 }

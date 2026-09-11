@@ -86,9 +86,10 @@ model Cargo {
   concursoId Int    @map("concurso_id")
   nome       String @db.VarChar(150)
 
-  concurso    Concurso     @relation(fields: [concursoId], references: [id], onDelete: Cascade)
+  concurso    Concurso       @relation(fields: [concursoId], references: [id], onDelete: Cascade)
   disciplinas Disciplina[]
   simulados   Simulado[]
+  sessoes     SessaoEstudo[]
 
   @@map("cargos")
 }
@@ -100,10 +101,14 @@ model Disciplina {
   /// Peso da disciplina na prova. Decimal, nao float: peso e nota, nao medida fisica.
   peso    Decimal? @default(1) @db.Decimal(4, 2)
 
-  cargo   Cargo    @relation(fields: [cargoId], references: [id], onDelete: Cascade)
+  cargo   Cargo          @relation(fields: [cargoId], references: [id], onDelete: Cascade)
   topicos Topico[]
+  sessoes SessaoEstudo[]
 
   @@unique([cargoId, nome])
+  /// Alvo da chave estrangeira composta em sessoes_estudo: garante no banco
+  /// que a disciplina informada na sessao pertence ao cargo informado.
+  @@unique([id, cargoId])
   @@map("disciplinas")
 }
 
@@ -121,6 +126,8 @@ model Topico {
   sessoes    SessaoEstudo[]
 
   @@unique([disciplinaId, codigoEdital])
+  /// Mesma ideia: amarra o topico da sessao a disciplina informada.
+  @@unique([id, disciplinaId])
   @@map("topicos")
 }
 
@@ -141,8 +148,18 @@ model Simulado {
 /// Fact table. Uma linha por sessao realizada, nunca um contador mutavel.
 /// Todo agregado (minutos, % de acerto) e SUM/GROUP BY em cima daqui.
 model SessaoEstudo {
-  id         Int  @id @default(autoincrement())
-  topicoId   Int  @map("topico_id")
+  id Int @id @default(autoincrement())
+
+  /// Onde o estudo entra. Sempre ha um cargo; disciplina e topico refinam.
+  ///   topico preenchido  -> estudo de um item do edital
+  ///   so disciplina      -> bateria avulsa da materia ("30 questoes de SI")
+  ///   so cargo           -> simulado da prova inteira
+  /// As chaves estrangeiras compostas abaixo impedem combinacao incoerente:
+  /// disciplina de outro cargo, ou topico de outra disciplina.
+  cargoId      Int  @map("cargo_id")
+  disciplinaId Int? @map("disciplina_id")
+  topicoId     Int? @map("topico_id")
+
   /// Opcional: nem toda sessao pertence a um simulado.
   simuladoId Int? @map("simulado_id")
 
@@ -160,10 +177,14 @@ model SessaoEstudo {
   observacoes String?
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  topico   Topico    @relation(fields: [topicoId], references: [id], onDelete: Cascade)
-  simulado Simulado? @relation(fields: [simuladoId], references: [id], onDelete: SetNull)
+  cargo      Cargo       @relation(fields: [cargoId], references: [id], onDelete: Cascade)
+  disciplina Disciplina? @relation(fields: [disciplinaId, cargoId], references: [id, cargoId], onDelete: Cascade)
+  topico     Topico?     @relation(fields: [topicoId, disciplinaId], references: [id, disciplinaId], onDelete: Cascade)
+  simulado   Simulado?   @relation(fields: [simuladoId], references: [id], onDelete: SetNull)
 
   @@index([topicoId], map: "idx_sessoes_topico")
+  @@index([disciplinaId], map: "idx_sessoes_disciplina")
+  @@index([cargoId], map: "idx_sessoes_cargo")
   @@index([data], map: "idx_sessoes_data")
   @@map("sessoes_estudo")
 }

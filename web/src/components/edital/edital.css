@@ -164,3 +164,97 @@
   border: 1px dashed var(--color-rule);
   border-radius: var(--radius-md);
 }
+
+/* Registro no nivel da disciplina: bateria avulsa da materia. */
+
+.disciplina__registrar {
+  font-family: var(--font-body);
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  background: none;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--ease-out-expo),
+    border-color var(--duration-fast) var(--ease-out-expo);
+}
+
+.disciplina__registrar:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.disciplina__painel {
+  margin-block-start: var(--space-md);
+  padding: var(--space-md);
+  background-color: var(--color-paper-raised);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-md);
+  animation: abrir-painel var(--duration-normal) var(--ease-out-expo);
+}
+
+.disciplina__explicacao {
+  margin: 0 0 var(--space-md);
+  font-size: var(--text-small);
+  color: var(--color-ink-soft);
+}
+
+/* -------------------------------------------------------------- simulado -- */
+
+.simulado {
+  margin-block-end: var(--space-xl);
+  border: 1px solid var(--color-rule);
+  border-inline-start: 3px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background-color: var(--color-paper-raised);
+  overflow: hidden;
+}
+
+.simulado__gatilho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-sm);
+  inline-size: 100%;
+  padding: var(--space-sm) var(--space-md);
+  font-family: inherit;
+  text-align: start;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out-expo);
+}
+
+.simulado__gatilho:hover {
+  background-color: var(--color-paper-sunken);
+}
+
+.simulado__rotulo {
+  font-family: var(--font-display);
+  font-size: var(--text-lead);
+  font-weight: 600;
+}
+
+.simulado__descricao {
+  font-size: var(--text-small);
+  color: var(--color-ink-soft);
+}
+
+.simulado__acao {
+  margin-inline-start: auto;
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.simulado__painel {
+  padding: var(--space-md);
+  border-block-start: 1px solid var(--color-rule);
+  animation: abrir-painel var(--duration-normal) var(--ease-out-expo);
+}

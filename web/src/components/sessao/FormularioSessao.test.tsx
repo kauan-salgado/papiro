@@ -21,7 +21,9 @@ beforeEach(() => {
 });
 
 function renderizar() {
-  return renderComProvedores(<FormularioSessao topicoId={TOPICO_ID} cargoId={CARGO_ID} />);
+  return renderComProvedores(
+    <FormularioSessao alvo={{ tipo: 'topico', id: TOPICO_ID }} cargoId={CARGO_ID} />,
+  );
 }
 
 describe('FormularioSessao — parte dinamica', () => {
