@@ -17,14 +17,33 @@ hospedado.
 
 ## 1. Banco no Neon
 
-1. Crie um projeto em [neon.tech](https://neon.tech) (plano gratuito, Postgres 16).
-2. Guarde as **duas** connection strings que o Neon oferece:
+1. Em [neon.tech](https://neon.tech), **crie um projeto novo** chamado `papiro`.
+
+   Nao reaproveite um projeto existente: o Papiro aplica as proprias migrations
+   no schema `public` e o seed apaga e recria os registros dele. Dividir o banco
+   com outro sistema mistura tabelas e faz o `migrate` brigar por drift, sem
+   ganho nenhum — o plano gratuito permite varios projetos na mesma conta.
+
+2. **Escolha a regiao pensando em onde a API vai rodar.** Elas precisam ficar
+   juntas: cada tela faz varias consultas por requisicao, e um oceano no meio
+   multiplica isso por uns 100 ms cada. Este repositorio fixa a funcao em
+   `gru1` (Sao Paulo) no `api/vercel.json` — entao crie o projeto Neon em
+   **AWS South America East 1 (Sao Paulo)**. Se preferir outra regiao, troque a
+   chave `regions` para a equivalente da Vercel.
+
+3. Guarde as **duas** connection strings que o Neon oferece:
    - **Pooled** (tem `-pooler` no host) → vai para `DATABASE_URL`
    - **Direct** (sem `-pooler`) → vai para `DIRECT_DATABASE_URL`
 
-Por que duas: cada requisicao serverless abre a propria conexao, e o pooler
-existe para isso. As migrations, ao contrario, precisam de conexao direta — o
-`prisma.config.ts` usa `DIRECT_DATABASE_URL` quando ela existe.
+   Por que duas: cada requisicao serverless abre a propria conexao, e o pooler
+   existe para isso. As migrations, ao contrario, precisam de conexao direta — o
+   `prisma.config.ts` usa `DIRECT_DATABASE_URL` quando ela existe.
+
+> A cota do plano gratuito e somada por organizacao, nao por projeto: se voce ja
+> tem outro projeto ativo na mesma conta, os dois dividem o mesmo limite de
+> compute e armazenamento. Para um portfolio isso e irrelevante — o Papiro com
+> os editais de exemplo ocupa poucos KB e o compute escala a zero quando
+> ninguem esta olhando. Confira em **Billing** se quiser acompanhar.
 
 ## 2. Projeto da API
 
@@ -35,6 +54,7 @@ Importe o repositorio na Vercel e configure:
 | Project Name | `papiro-api` |
 | Root Directory | `api` |
 | Build Command | (ja vem do `api/vercel.json`) |
+| Regiao da funcao | `gru1` — ja fixada no `api/vercel.json` |
 
 Variaveis de ambiente:
 
@@ -111,4 +131,5 @@ dados.
 | `/api/health` responde, mas `banco.conectado: false` | `DATABASE_URL` sem `?sslmode=require` |
 | Deploy da API falha em `migrate deploy` | `DIRECT_DATABASE_URL` ausente: o pooler nao aceita os comandos do migrate |
 | Front carrega mas as telas ficam vazias | destino do rewrite em `web/vercel.json` apontando para um dominio que nao existe |
+| Tudo funciona, mas cada tela demora | funcao e banco em regioes diferentes: confira `regions` no `api/vercel.json` contra a regiao do projeto Neon |
 | Tudo funciona e o visitante toma 403 ao apagar | e o modo demonstracao fazendo o trabalho dele |
