@@ -1,5 +1,7 @@
 # Papiro
 
+[![verificar](https://github.com/kauan-salgado/papiro/actions/workflows/verificar.yml/badge.svg)](https://github.com/kauan-salgado/papiro/actions/workflows/verificar.yml)
+
 **Gerenciador de edital verticalizado e metricas de estudo** para quem estuda
 para varios concursos de TI ao mesmo tempo.
 
@@ -544,11 +546,9 @@ Um projeto de portfolio honesto declara o que **nao** fez:
   `deepmerge-ts`), dependencias de desenvolvimento que nao entram no runtime —
   a API fala Postgres pelo `@prisma/adapter-pg`. Corrigir com `audit fix --force`
   faria downgrade da CLI.
-- **CI sem execucao comprovada.** O workflow existe
-  (`.github/workflows/verificar.yml`: sobe um Postgres 16, aplica as migrations,
-  roda typecheck, os 162 testes com cobertura e o build) e os mesmos comandos
-  passam localmente — mas o repositorio ainda nao foi enviado ao GitHub, entao
-  ninguem o viu rodar la.
+- **Sem deploy.** O projeto roda localmente por `docker compose`; nao ha
+  ambiente publicado. O `Dockerfile` da API ja tem estagio de producao, mas
+  ninguem o executou fora da maquina de desenvolvimento.
 
 ### Proximos passos naturais
 
